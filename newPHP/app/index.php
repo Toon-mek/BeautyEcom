@@ -92,7 +92,8 @@ foreach ($categories as $category) {
         <?php foreach ($categories as $category): ?>
             <a href="product/all_product.php?category=<?php echo $category['CategoryID']; ?>" class="category-card">
                 <div class="category-icon">
-                    <i class="fas fa-spa"></i>
+                    <img src="category_img/<?php echo $category['catIMG']; ?>" 
+                         alt="<?php echo htmlspecialchars($category['CategoryName']); ?>">
                 </div>
                 <h3><?php echo htmlspecialchars($category['CategoryName']); ?></h3>
                 <p><?php echo htmlspecialchars($category['CategoryDescription']); ?></p>
