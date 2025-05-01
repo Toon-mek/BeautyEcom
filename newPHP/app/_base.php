@@ -133,30 +133,82 @@ function getProduct($product_id)
 function handleAddToCart($product_id, $quantity)
 {
     if (!isLoggedIn()) {
+        $_SESSION['error'] = "Please login to add items to cart.";
         header("Location: ../auth/login.php");
         exit();
     }
 
     global $pdo;
 
-    $stmt = $pdo->prepare("SELECT CartID FROM cart WHERE MemberID = ? AND CartStatus = 'Active'");
-    $stmt->execute([$_SESSION['member_id']]);
-    $cart = $stmt->fetch();
+    // Check if product exists and has enough stock
+    $stmt = $pdo->prepare("SELECT Quantity, ProductName FROM product WHERE ProductID = ?");
+    $stmt->execute([$product_id]);
+    $product = $stmt->fetch();
 
-    if (!$cart) {
-        $stmt = $pdo->prepare("INSERT INTO cart (MemberID, CreatedAt, CartStatus) VALUES (?, NOW(), 'Active')");
-        $stmt->execute([$_SESSION['member_id']]);
-        $cart_id = $pdo->lastInsertId();
-    } else {
-        $cart_id = $cart['CartID'];
+    if (!$product) {
+        $_SESSION['error'] = "Product not found.";
+        header("Location: all_product.php");
+        exit();
     }
 
-    $stmt = $pdo->prepare("INSERT INTO cartitem (CartID, ProductID, Quantity) VALUES (?, ?, ?)");
-    $stmt->execute([$cart_id, $product_id, $quantity]);
+    if ($product['Quantity'] < $quantity) {
+        $_SESSION['error'] = "Sorry, only " . $product['Quantity'] . " items available in stock.";
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit();
+    }
 
-    header("Location: ../order/cart.php");
-    exit();
+    try {
+        $pdo->beginTransaction();
+
+        // Get or create active cart
+        $stmt = $pdo->prepare("SELECT CartID FROM cart WHERE MemberID = ? AND CartStatus = 'Active'");
+        $stmt->execute([$_SESSION['member_id']]);
+        $cart = $stmt->fetch();
+
+        if (!$cart) {
+            $stmt = $pdo->prepare("INSERT INTO cart (MemberID, CreatedAt, CartStatus) VALUES (?, NOW(), 'Active')");
+            $stmt->execute([$_SESSION['member_id']]);
+            $cart_id = $pdo->lastInsertId();
+        } else {
+            $cart_id = $cart['CartID'];
+        }
+
+        // Check if product already exists in cart
+        $stmt = $pdo->prepare("SELECT CartItemID, Quantity FROM cartitem WHERE CartID = ? AND ProductID = ?");
+        $stmt->execute([$cart_id, $product_id]);
+        $existing_item = $stmt->fetch();
+
+        if ($existing_item) {
+            // Update quantity if product already in cart
+            $new_quantity = $existing_item['Quantity'] + $quantity;
+            if ($new_quantity > $product['Quantity']) {
+                $_SESSION['error'] = "Cannot add more items. Cart would exceed available stock.";
+                $pdo->rollBack();
+                header("Location: " . $_SERVER['HTTP_REFERER']);
+                exit();
+            }
+            $stmt = $pdo->prepare("UPDATE cartitem SET Quantity = ? WHERE CartItemID = ?");
+            $stmt->execute([$new_quantity, $existing_item['CartItemID']]);
+        } else {
+            // Add new cart item
+            $stmt = $pdo->prepare("INSERT INTO cartitem (CartID, ProductID, Quantity) VALUES (?, ?, ?)");
+            $stmt->execute([$cart_id, $product_id, $quantity]);
+        }
+
+        $pdo->commit();
+        $_SESSION['success'] = $product['ProductName'] . " has been added to your cart.";
+        header("Location: ../order/cart.php");
+        exit();
+
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        error_log("Add to Cart Error: " . $e->getMessage());
+        $_SESSION['error'] = "Error adding item to cart. Please try again.";
+        header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit();
+    }
 }
+
 // ------------------------------
 // 🛒 Cart Management (Logic)
 // ------------------------------
@@ -595,6 +647,102 @@ function getMemberProfilePhoto($member_id) {
     } catch (PDOException $e) {
         error_log("Get Profile Photo Error: " . $e->getMessage());
         return 'default-profile.png';
+    }
+}
+
+// ------------------------------
+// 👤 Member Settings Functions
+// ------------------------------
+
+function updateMemberPhoto($memberId, $file) {
+    global $pdo;
+    if (isset($file) && $file['error'] === UPLOAD_ERR_OK) {
+        $targetDir = __DIR__ . '/uploads/';
+        $fileName = uniqid() . '_' . basename($file['name']);
+        $targetFile = $targetDir . $fileName;
+        $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+        
+        if (in_array($imageFileType, ['jpg', 'jpeg', 'png', 'gif'])) {
+            if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+                try {
+                    $stmt = $pdo->prepare("UPDATE member SET ProfilePhoto=? WHERE MemberID=?");
+                    $stmt->execute([$fileName, $memberId]);
+                    return ["success" => "Profile photo updated successfully!"];
+                } catch (PDOException $e) {
+                    error_log("Photo Update Error: " . $e->getMessage());
+                    return ["error" => "Error updating profile photo"];
+                }
+            }
+        }
+    }
+    return ["error" => "Invalid file upload"];
+}
+
+function updateMemberAddress($memberId, $address) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("UPDATE member SET address = ? WHERE MemberID = ?");
+        $stmt->execute([$address, $memberId]);
+        return ["success" => "Address updated successfully!"];
+    } catch (PDOException $e) {
+        error_log("Address Update Error: " . $e->getMessage());
+        return ["error" => "Error updating address"];
+    }
+}
+
+function updateMemberDetails($memberId, $data) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("UPDATE member SET Name=?, Email=?, PhoneNumber=?, Gender=?, DateOfBirth=? WHERE MemberID=?");
+        $stmt->execute([
+            $data['name'] ?? '',
+            $data['email'] ?? '',
+            $data['phone'] ?? '',
+            $data['gender'] ?? '',
+            $data['dob'] ?? '',
+            $memberId
+        ]);
+        return ["success" => "Profile updated successfully!"];
+    } catch (PDOException $e) {
+        error_log("Profile Update Error: " . $e->getMessage());
+        return ["error" => "Error updating profile"];
+    }
+}
+
+function updateMemberPassword($memberId, $currentPassword, $newPassword, $confirmPassword) {
+    global $pdo;
+    if ($newPassword !== $confirmPassword) {
+        return ["error" => "New passwords do not match"];
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT Password FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        $member = $stmt->fetch();
+        
+        if (!$member || !password_verify($currentPassword, $member['Password'])) {
+            return ["error" => "Current password is incorrect"];
+        }
+        
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE member SET Password = ? WHERE MemberID = ?");
+        $stmt->execute([$hashedPassword, $memberId]);
+        return ["success" => "Password changed successfully!"];
+    } catch (PDOException $e) {
+        error_log("Password Update Error: " . $e->getMessage());
+        return ["error" => "Error changing password"];
+    }
+}
+
+function getMemberDetails($memberId) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log("Get Member Details Error: " . $e->getMessage());
+        return null;
     }
 }
 

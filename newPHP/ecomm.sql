@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 29, 2025 at 06:40 PM
+-- Generation Time: May 01, 2025 at 01:49 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -122,15 +122,20 @@ CREATE TABLE `member` (
   `ProfilePhoto` varchar(255) DEFAULT NULL,
   `Gender` enum('Male','Female','Other') DEFAULT NULL,
   `DateOfBirth` date DEFAULT NULL,
-  `CreatedAt` datetime DEFAULT NULL
+  `CreatedAt` datetime NOT NULL DEFAULT current_timestamp(),
+  `MembershipStatus` varchar(20) DEFAULT 'Active',
+  `LastLogin` datetime DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `member`
 --
 
-INSERT INTO `member` (`MemberID`, `Name`, `Password`, `Email`, `PhoneNumber`, `ProfilePhoto`, `Gender`, `DateOfBirth`, `CreatedAt`) VALUES
-(1, 'Yikheng', '$2y$10$im2GcOkbaj8FRqgrJ8uYoeX72vGkOmx44QjC2FRzd8xLxwDf8biLa', 'yikheng0613@gmail.com', '123456789', '6810f983ba356_profile1.jpg', 'Male', '2004-06-13', '2025-04-29 15:08:11');
+INSERT INTO `member` (`MemberID`, `Name`, `Password`, `Email`, `PhoneNumber`, `ProfilePhoto`, `Gender`, `DateOfBirth`, `CreatedAt`, `MembershipStatus`, `LastLogin`, `address`) VALUES
+(1, 'heng', '$2y$10$EbgwWdwPgSv94735sie/OeB0qXbzZf.20gMOMwIBbmGZieg/WPoWy', 'yikheng0613@gmail.com', '0123456789', '68135c2436184_IMG-20240916-WA0039.jpg', 'Male', '2004-06-13', '2025-04-29 15:08:11', 'Active', NULL, NULL),
+(5, 'abc', '$2y$10$hByzvxy1Xs9JPnGr.jhoDu467GrSrD8tmfJPnIpSVlTaMM4OYknS6', 'abc@gmail.com', '123456789', NULL, NULL, NULL, '2025-05-01 16:35:34', 'Active', NULL, NULL),
+(6, 'gg', '$2y$10$4zJmQQiGEJ3YNTCzzbJOOOffhrYq/777bLt.Vc2XLZ3/zjxVcbHI.', 'gg123@gmail.com', '123456789', NULL, 'Female', '2025-05-10', '2025-05-01 17:03:29', 'Blocked', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -199,7 +204,8 @@ CREATE TABLE `product` (
 --
 
 INSERT INTO `product` (`ProductID`, `CategoryID`, `ProductName`, `Description`, `Price`, `Quantity`, `ProdIMG1`, `ProdIMG2`, `ProdIMG3`) VALUES
-(1, 1, 'The Ordinary Niacinamide 10% + Zinc 1% (30ml)', 'A high-strength vitamin and mineral formula that visibly targets the appearance of blemishes, large pores, and oily skin. Niacinamide (Vitamin B3) is scientifically proven to help reduce the look of skin blemishes and congestion. This formula is further supported with zinc salt of pyrrolidone carboxylic acid to balance visible aspects of sebum activity.', '42.00', 1000, '6811009113629_product1.webp', '6811009113a08_product1.jpg', '6811009113f01_product1.jpeg');
+(1, 1, 'The Ordinary Niacinamide 10% + Zinc 1% (30ml)', 'A high-strength vitamin and mineral formula that visibly targets the appearance of blemishes, large pores, and oily skin. Niacinamide (Vitamin B3) is scientifically proven to help reduce the look of skin blemishes and congestion. This formula is further supported with zinc salt of pyrrolidone carboxylic acid to balance visible aspects of sebum activity.', '42.00', 1000, '6811009113629_product1.webp', '6811009113a08_product1.jpg', '6811009113f01_product1.jpeg'),
+(2, 2, 'Maybelline Fit Me Matte + Poreless Liquid Foundation – 120 Classic Ivory (30ml)', 'Maybelline Fit Me Matte + Poreless Foundation is a lightweight liquid foundation designed to provide a natural, seamless matte finish. Specially formulated for normal to oily skin, it refines pores and controls shine for a smooth, even complexion. With micro-powders that blur pores and absorb oil, your skin will look naturally flawless all day.', '45.90', 1000, '68124b580c669_images.jpeg', '68124b580cb71_download (2).jpeg', '68124b580ce15_download (1).jpeg');
 
 -- --------------------------------------------------------
 
@@ -356,7 +362,7 @@ ALTER TABLE `manager`
 -- AUTO_INCREMENT for table `member`
 --
 ALTER TABLE `member`
-  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `order`
@@ -380,7 +386,7 @@ ALTER TABLE `payment`
 -- AUTO_INCREMENT for table `product`
 --
 ALTER TABLE `product`
-  MODIFY `ProductID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `ProductID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `staff`

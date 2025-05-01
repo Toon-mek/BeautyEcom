@@ -33,7 +33,7 @@ $featuredProducts = getProducts();
     <div class="product-grid">
         <?php foreach ($featuredProducts as $product): ?>
             <div class="product-card">
-                <img src="<?php echo htmlspecialchars($product['ProdIMG1']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>" class="product-image">
+                <img src="uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" alt="<?php echo htmlspecialchars($product['ProductName']); ?>" class="product-image">
                 <div class="product-info">
                     <h3 class="product-title"><?php echo htmlspecialchars($product['ProductName']); ?></h3>
                     <p class="product-price">$<?php echo number_format($product['Price'], 2); ?></p>

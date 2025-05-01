@@ -36,14 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         <!-- Product Images -->
         <div class="col-md-6">
             <div class="product-gallery">
-                <img src="<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="main-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
+                <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="main-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
                 <div class="thumbnails">
-                    <img src="<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="thumbnail active" alt="Thumbnail 1">
+                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="thumbnail active" alt="Thumbnail 1">
                     <?php if ($product['ProdIMG2']): ?>
-                        <img src="<?php echo htmlspecialchars($product['ProdIMG2']); ?>" class="thumbnail" alt="Thumbnail 2">
+                        <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG2']); ?>" class="thumbnail" alt="Thumbnail 2">
                     <?php endif; ?>
                     <?php if ($product['ProdIMG3']): ?>
-                        <img src="<?php echo htmlspecialchars($product['ProdIMG3']); ?>" class="thumbnail" alt="Thumbnail 3">
+                        <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG3']); ?>" class="thumbnail" alt="Thumbnail 3">
                     <?php endif; ?>
                 </div>
             </div>
@@ -60,12 +60,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
                 <p><?php echo nl2br(htmlspecialchars($product['Description'])); ?></p>
             </div>
 
-            <form method="POST" action="">
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="error-message">
+                    <?php 
+                    echo $_SESSION['error'];
+                    unset($_SESSION['error']);
+                    ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="success-message">
+                    <?php 
+                    echo $_SESSION['success'];
+                    unset($_SESSION['success']);
+                    ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="" class="add-to-cart-form">
                 <div class="mb-3">
                     <label for="quantity" class="form-label">Quantity</label>
-                    <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="<?php echo $product['Quantity']; ?>">
+                    <div class="quantity-input">
+                        <button type="button" class="quantity-btn" onclick="decrementQuantity()">-</button>
+                        <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="<?php echo $product['Quantity']; ?>">
+                        <button type="button" class="quantity-btn" onclick="incrementQuantity()">+</button>
+                    </div>
+                    <small class="text-muted">Available Stock: <?php echo $product['Quantity']; ?></small>
                 </div>
-                <button type="submit" name="add_to_cart" class="btn btn-dark btn-lg w-100">Add to Cart</button>
+                <button type="submit" name="add_to_cart" class="btn btn-dark btn-lg w-100" <?php echo $product['Quantity'] < 1 ? 'disabled' : ''; ?>>
+                    <?php echo $product['Quantity'] < 1 ? 'Out of Stock' : 'Add to Cart'; ?>
+                </button>
             </form>
         </div>
     </div>
@@ -80,6 +105,36 @@ document.querySelectorAll('.thumbnail').forEach(thumb => {
         document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
     });
+});
+
+// Quantity input functionality
+function incrementQuantity() {
+    const input = document.getElementById('quantity');
+    const max = parseInt(input.max);
+    const currentValue = parseInt(input.value);
+    if (currentValue < max) {
+        input.value = currentValue + 1;
+    }
+}
+
+function decrementQuantity() {
+    const input = document.getElementById('quantity');
+    const currentValue = parseInt(input.value);
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+    }
+}
+
+// Prevent manual input of invalid quantities
+document.getElementById('quantity').addEventListener('change', function() {
+    const max = parseInt(this.max);
+    const value = parseInt(this.value);
+    if (value > max) {
+        this.value = max;
+    }
+    if (value < 1) {
+        this.value = 1;
+    }
 });
 </script>
 </body>

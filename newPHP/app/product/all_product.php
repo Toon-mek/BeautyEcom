@@ -60,11 +60,11 @@ $search = $filters['search'];
                         <?php foreach($products as $product): ?>
                             <div class="col-md-4">
                                 <div class="card product-card">
-                                    <img src="<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
+                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo htmlspecialchars($product['ProductName']); ?></h5>
                                         <p class="card-text"><?php echo htmlspecialchars($product['CategoryName']); ?></p>
-                                        <p class="card-text"><strong>$<?php echo number_format($product['Price'], 2); ?></strong></p>
+                                        <p class="card-text"><strong>RM <?php echo number_format($product['Price'], 2); ?></strong></p>
                                         <a href="product.php?id=<?php echo $product['ProductID']; ?>" class="btn btn-dark">View Details</a>
                                     </div>
                                 </div>
