@@ -1,13 +1,18 @@
-function showEditForm(member) {
-    document.getElementById("edit_member_id").value = member.id;
-    document.getElementById("edit_name").value = member.name;
-    document.getElementById("edit_email").value = member.email;
-    document.getElementById("edit_phone").value = member.phone;
-    document.getElementById("edit_status").value = member.status;
-    document.getElementById("edit_profile_photo").value = '';
+function showEditForm(id, name, email, phone, status, profilePhoto) {
+    // Open modal
+    document.getElementById('editModal').classList.add('active');
 
-    // ✅ Make modal visible
-    document.getElementById("editModal").classList.add('active');
+    // Set values
+    document.getElementById('edit_member_id').value = id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('edit_phone').value = phone;
+
+    // Set status dropdown with safe match
+    const statusSelect = document.getElementById('edit_status');
+
+    // Reset file input
+    document.getElementById('edit_profile_photo').value = '';
 }
 
 
