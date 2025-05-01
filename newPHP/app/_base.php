@@ -329,6 +329,13 @@ function handleStaffLogin()
         if ($user && password_verify($password, $user['Password'])) {
             $_SESSION['staff_id'] = $username;
             $_SESSION['staff_name'] = $user['StaffName'] ?? $user['ManagerName'] ?? $username;
+            
+            // Check if it's a first-time login for staff (not managers)
+            if (isset($user['FirstTimeLogin']) && $user['FirstTimeLogin'] == 1) {
+                header("Location: ../auth/staffSetup.php");
+                exit();
+            }
+            
             header("Location: ../admin/adminindex.php");
             exit();
         } else {
