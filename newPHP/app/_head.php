@@ -1,6 +1,12 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/_base.php';
+
+// Ensure uploads directory exists
+$uploadsDir = __DIR__ . '/uploads';
+if (!file_exists($uploadsDir)) {
+    mkdir($uploadsDir, 0777, true);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,10 +30,18 @@ require_once __DIR__ . '/_base.php';
                         <li class="profile-dropdown">
                             <?php
                             $profilePhoto = getMemberProfilePhoto($_SESSION['member_id']);
+                            $photoPath = "/newPHP/app/uploads/" . htmlspecialchars($profilePhoto);
+                            $defaultPhoto = "/newPHP/app/uploads/default-profile.png";
+                            
+                            // Check if file exists, if not use default
+                            if (!file_exists(__DIR__ . '/uploads/' . $profilePhoto)) {
+                                $photoPath = $defaultPhoto;
+                            }
                             ?>
-                            <img src="/newPHP/app/uploads/<?php echo htmlspecialchars($profilePhoto); ?>" 
+                            <img src="<?php echo $photoPath; ?>" 
                                  alt="Profile" 
-                                 class="profile-photo">
+                                 class="profile-photo"
+                                 onerror="this.src='<?php echo $defaultPhoto; ?>'">
                             <div class="dropdown-content">
                                 <a href="/newPHP/app/member/settings.php">Settings</a>
                                 <a href="/newPHP/app/auth/logout.php">Logout</a>
