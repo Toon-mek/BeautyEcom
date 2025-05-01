@@ -2,17 +2,14 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../_base.php';
-
 requireLogin('staff');
 // Ensure only managers can access this page
 if (!isManager($_SESSION['staff_id'])) {
     header("Location: adminindex.php");
     exit();
 }
-
 // Handle Add Staff
 if (isset($_POST['add_staff'])) {
     $username = $_POST['username'];

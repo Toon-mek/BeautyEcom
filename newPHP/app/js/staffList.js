@@ -1,8 +1,6 @@
-
 function showAddForm() {
     document.getElementById('addModal').classList.add('active');
 }
-
 function hideAddForm() {
     document.getElementById('addModal').classList.remove('active');
     document.getElementById('addForm').reset();
@@ -17,7 +15,6 @@ function showEditForm(staff) {
     document.getElementById('edit_contact').value = staff.contact;
     document.getElementById('edit_status').value = staff.status;
 }
-
 function hideEditForm() {
     document.getElementById('editModal').classList.remove('active');
     document.getElementById('editForm').reset();
