@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../_base.php';
 
 $error = null;
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'] ?? '';
     $email = $_POST['email'] ?? '';
@@ -10,16 +9,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = $_POST['phone'] ?? '';
     $gender = $_POST['gender'] ?? '';
     $dob = $_POST['dob'] ?? '';
-
     if (registerUser($name, $email, $password, $phone, $gender, $dob)) {
-        header("Location: login.php");
+        // Show success message using JavaScript before redirecting
+        echo "<script>
+            alert('Registration successful!!');
+            window.location.href = 'login.php?registered=1';
+        </script>";
         exit();
     } else {
         $error = "Registration failed. Email might already be in use.";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if(isset($error)): ?>
             <div class="alert alert-danger"><?php echo $error; ?></div>
         <?php endif; ?>
-        <form method="POST" action="">
+        <form method="POST" action="" onsubmit="return validateForm();">
             <div class="form-group">
                 <label for="name" class="form-label">Full Name</label>
                 <input type="text" class="form-input" id="name" name="name" required>
@@ -76,5 +77,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>Already have an account? <a href="login.php">Login here</a></p>
         </div>
     </div>
+    <script src="../js/register.js"></script>
 </body>
 </html>
