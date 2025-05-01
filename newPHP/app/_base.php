@@ -48,13 +48,13 @@ function isLoggedIn()
 function logoutUser() {
     session_unset();
     session_destroy();
-    header("Location: /newPHP/app/index.php");
+    header("Location: /../index.php");
     exit();
 }
 
 function redirectIfNotLoggedIn() {
     if (!isset($_SESSION['member_id'])) {
-        header("Location: ../auth/login.php");
+        header("Location: /../auth/login.php");
         exit();
     }
 }
@@ -62,12 +62,12 @@ function redirectIfNotLoggedIn() {
 function requireLogin($role = 'member') {
     if ($role === 'staff') {
         if (!isset($_SESSION['staff_id'])) {
-            header("Location: ../auth/staffLogin.php");
+            header("Location: /../auth/staffLogin.php");
             exit();
         }
     } elseif ($role === 'member') {
         if (!isset($_SESSION['member_id'])) {
-            header("Location: ../auth/login.php");
+            header("Location: /../auth/login.php");
             exit();
         }
     }
