@@ -24,10 +24,10 @@ function loginUser($email, $password)
 {
     global $pdo;
     try {
-        $stmt = $pdo->prepare("SELECT * FROM member WHERE Email = ?");
+        $stmt = $pdo->prepare("SELECT * FROM member WHERE Email = ? LIMIT 1");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
-
+    
         if ($user && password_verify($password, $user['Password'])) {
             $_SESSION['member_id'] = $user['MemberID'];
             $_SESSION['name'] = $user['Name'];
@@ -38,12 +38,20 @@ function loginUser($email, $password)
         error_log("Login Error: " . $e->getMessage());
         return false;
     }
-}
+}    
 
 function isLoggedIn()
 {
     return isset($_SESSION['member_id']);
 }
+
+function logoutUser() {
+    session_unset();
+    session_destroy();
+    header("Location: /newPHP/app/index.php");
+    exit();
+}
+
 function redirectIfNotLoggedIn() {
     if (!isset($_SESSION['member_id'])) {
         header("Location: ../auth/login.php");
@@ -64,6 +72,7 @@ function requireLogin($role = 'member') {
         }
     }
 }
+
 // ------------------------------
 // 📦 Product List + Filter
 // ------------------------------
@@ -71,9 +80,9 @@ function getProducts($filters = [])
 {
     global $pdo;
     $query = "SELECT p.*, c.CategoryName 
-              FROM product p 
-              LEFT JOIN category c ON p.CategoryID = c.CategoryID 
-              WHERE 1=1";
+            FROM product p 
+            LEFT JOIN category c ON p.CategoryID = c.CategoryID 
+            WHERE 1=1";
     $params = [];
 
     if (!empty($filters['category'])) {
@@ -111,9 +120,9 @@ function getProduct($product_id)
 {
     global $pdo;
     $stmt = $pdo->prepare("SELECT p.*, c.CategoryName 
-                           FROM product p 
-                           LEFT JOIN category c ON p.CategoryID = c.CategoryID 
-                           WHERE p.ProductID = ?");
+                        FROM product p 
+                        LEFT JOIN category c ON p.CategoryID = c.CategoryID 
+                        WHERE p.ProductID = ?");
     $stmt->execute([$product_id]);
     return $stmt->fetch();
 }
@@ -154,10 +163,10 @@ function handleAddToCart($product_id, $quantity)
 function getCartItems($pdo)
 {
     $stmt = $pdo->prepare("SELECT ci.*, p.ProductName, p.Price, p.ProdIMG1 
-                          FROM cartitem ci 
-                          JOIN product p ON ci.ProductID = p.ProductID 
-                          JOIN cart c ON ci.CartID = c.CartID 
-                          WHERE c.MemberID = ? AND c.CartStatus = 'Active'");
+                        FROM cartitem ci 
+                        JOIN product p ON ci.ProductID = p.ProductID 
+                        JOIN cart c ON ci.CartID = c.CartID 
+                        WHERE c.MemberID = ? AND c.CartStatus = 'Active'");
     $stmt->execute([$_SESSION['member_id']]);
     return $stmt->fetchAll();
 }
@@ -369,11 +378,20 @@ function getTotalSales()
 // ------------------------------
 // 👥 Member Management (Admin)
 // ------------------------------
-function fetchAllMembers()
+function fetchAllMembers($sort = 'CreatedAt', $order = 'desc')
 {
     global $pdo;
-    return $pdo->query("SELECT * FROM member")->fetchAll();
-}
+
+    $allowedSortFields = ['MemberID', 'Name', 'Email', 'PhoneNumber', 'Gender', 'DateOfBirth', 'CreatedAt'];
+    $allowedOrder = ['asc', 'desc'];
+
+    if (!in_array($sort, $allowedSortFields)) $sort = 'CreatedAt';
+    if (!in_array(strtolower($order), $allowedOrder)) $order = 'desc';
+
+    $stmt = $pdo->prepare("SELECT * FROM member ORDER BY $sort $order");
+    $stmt->execute();
+    return $stmt->fetchAll();
+}    
 
 function deleteMember($id)
 {
@@ -385,20 +403,19 @@ function deleteMember($id)
 function editMember($data, $profilePhoto)
 {
     global $pdo;
-    $id = $data['member_id'];
-    $name = $data['name'];
-    $email = $data['email'];
-    $phone = $data['phone'];
-    $gender = $data['gender'];
-    $dob = $data['dob'];
+    $id       = $data['member_id'];
+    $name     = $data['name'];
+    $email    = $data['email'];
+    $phone    = $data['phone'];
+    $status   = $data['status'];
 
     if (!empty($data['password'])) {
         $password = password_hash($data['password'], PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE member SET Name=?, Email=?, PhoneNumber=?, ProfilePhoto=?, Gender=?, DateOfBirth=?, Password=? WHERE MemberID=?");
-        $stmt->execute([$name, $email, $phone, $profilePhoto, $gender, $dob, $password, $id]);
+        $stmt = $pdo->prepare("UPDATE member SET Name = ?, Email = ?, PhoneNumber = ?, ProfilePhoto = ?, MembershipStatus = ?, Password = ? WHERE MemberID = ?");
+        $stmt->execute([$name, $email, $phone, $profilePhoto, $status, $password, $id]);
     } else {
-        $stmt = $pdo->prepare("UPDATE member SET Name=?, Email=?, PhoneNumber=?, ProfilePhoto=?, Gender=?, DateOfBirth=? WHERE MemberID=?");
-        $stmt->execute([$name, $email, $phone, $profilePhoto, $gender, $dob, $id]);
+        $stmt = $pdo->prepare("UPDATE member SET Name = ?, Email = ?, PhoneNumber = ?, ProfilePhoto = ?, MembershipStatus = ? WHERE MemberID = ?");
+        $stmt->execute([$name, $email, $phone, $profilePhoto, $status, $id]);
     }
 }
 
@@ -406,10 +423,10 @@ function handleDeleteMember()
 {
     if (isset($_GET['delete'])) {
         deleteMember($_GET['delete']);
-        header("Location: membership.php");
+        header("Location: memberList.php");
         exit();
     }
-}
+}    
 
 function handleEditMember()
 {
@@ -432,7 +449,7 @@ function handleEditMember()
         }
 
         editMember($_POST, $profilePhoto);
-        header("Location: membership.php");
+        header("Location: memberList.php");
         exit();
     }
 }
@@ -532,9 +549,9 @@ function redirectIfInvalidOrder($pdo, $order_id) {
     }
 
     $stmt = $pdo->prepare("SELECT o.*, m.Name, m.Email, m.PhoneNumber 
-                          FROM `order` o 
-                          JOIN member m ON o.MemberID = m.MemberID 
-                          WHERE o.OrderID = ? AND o.MemberID = ?");
+                        FROM `order` o 
+                        JOIN member m ON o.MemberID = m.MemberID 
+                        WHERE o.OrderID = ? AND o.MemberID = ?");
     $stmt->execute([$order_id, $_SESSION['member_id']]);
     $order = $stmt->fetch();
 
@@ -548,9 +565,9 @@ function redirectIfInvalidOrder($pdo, $order_id) {
 
 function getOrderItems($pdo, $order_id) {
     $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1 
-                          FROM orderitem oi 
-                          JOIN product p ON oi.ProductID = p.ProductID 
-                          WHERE oi.OrderID = ?");
+                        FROM orderitem oi 
+                        JOIN product p ON oi.ProductID = p.ProductID 
+                        WHERE oi.OrderID = ?");
     $stmt->execute([$order_id]);
     return $stmt->fetchAll();
 }
@@ -559,6 +576,19 @@ function getPaymentDetails($pdo, $order_id) {
     $stmt = $pdo->prepare("SELECT * FROM payment WHERE OrderID = ?");
     $stmt->execute([$order_id]);
     return $stmt->fetch();
+}
+
+function getMemberProfilePhoto($member_id) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
+        $stmt->execute([$member_id]);
+        $member = $stmt->fetch();
+        return $member['ProfilePhoto'] ?: 'default-profile.png';
+    } catch (PDOException $e) {
+        error_log("Get Profile Photo Error: " . $e->getMessage());
+        return 'default-profile.png';
+    }
 }
 
 ?>
