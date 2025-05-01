@@ -11,13 +11,20 @@ if (!isLoggedIn()) {
 // Handle cart actions
 handleCartActions($pdo);
 
-// Get cart items
-$cart_items = getCartItems($pdo);
+// Get cart items with stock information
+$stmt = $pdo->prepare("
+    SELECT ci.*, p.ProductName, p.Price, p.ProdIMG1, p.Quantity as StockQuantity 
+    FROM cartitem ci 
+    JOIN product p ON ci.ProductID = p.ProductID 
+    JOIN cart c ON ci.CartID = c.CartID 
+    WHERE c.MemberID = ? AND c.CartStatus = 'Active'
+");
+$stmt->execute([$_SESSION['member_id']]);
+$cart_items = $stmt->fetchAll();
 
 // Calculate total
 $total = calculateCartTotal($cart_items);
 ?>
-  <!-- Include header here -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -29,98 +36,138 @@ $total = calculateCartTotal($cart_items);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Header Section (Included once) -->
-    <header class="main-header">
-        <div class="header-container">
-            <a href="/newPHP/app/index.php" class="header-logo">Beauty & Wellness</a>
-            <nav class="header-nav">
-                <ul class="nav-list">
-                    <li><a href="/newPHP/app/index.php" class="nav-link">Home</a></li>
-                    <li><a href="/newPHP/app/product/product.php" class="nav-link">Products</a></li>
-                    <li><a href="/newPHP/app/order/cart.php" class="nav-link">Cart</a></li>
+    <?php require_once __DIR__ . '/../_head.php'; ?>
 
-                    <?php if (isLoggedIn()): ?>
-                        <!-- Display Profile Link if the user is logged in -->
-                        <li><a href="/newPHP/app/member/memberindex.php" class="nav-link">Profile</a></li>
-
-                        <!-- Display Logout Link -->
-                        <li><a href="/newPHP/app/index.php" class="nav-link">Logout</a></li>
-                    <?php else: ?>
-                        <!-- Display Login Link if the user is not logged in -->
-                        <li><a href="/newPHP/app/auth/login.php" class="nav-link">Log In</a></li>
-                    <?php endif; ?>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Cart Content Section -->
-    <div class="container py-5">
+    <div class="cart-container">
         <h1 class="mb-4">Shopping Cart</h1>
         
+        <?php if(isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger">
+                <?php 
+                echo $_SESSION['error'];
+                unset($_SESSION['error']);
+                ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if(isset($_SESSION['success'])): ?>
+            <div class="alert alert-success">
+                <?php 
+                echo $_SESSION['success'];
+                unset($_SESSION['success']);
+                ?>
+            </div>
+        <?php endif; ?>
+
         <?php if(count($cart_items) > 0): ?>
-            <form method="POST" action="">
-                <div class="row">
-                    <div class="col-md-8">
+            <form method="POST" action="" id="cartForm">
+                <div class="cart-grid">
+                    <div class="cart-items">
+                        <div class="select-all-container">
+                            <input type="checkbox" id="selectAll" class="select-all-checkbox">
+                            <label for="selectAll" class="select-all-label">Select All Items</label>
+                            <div style="flex-grow: 1;"></div>
+                            <div class="selected-items-count">
+                                <span id="selectedCount">0</span> items selected
+                            </div>
+                        </div>
+
                         <?php foreach($cart_items as $item): ?>
-                            <div class="cart-item">
-                                <div class="row align-items-center">
-                                    <div class="col-md-2">
-                                        <img src="<?php echo htmlspecialchars($item['ProdIMG1']); ?>" class="product-image" alt="<?php echo htmlspecialchars($item['ProductName']); ?>">
+                            <div class="cart-item" data-price="<?php echo $item['Price'] * $item['Quantity']; ?>">
+                                <div class="cart-item-content">
+                                    <input type="checkbox" 
+                                           name="selected_items[]" 
+                                           value="<?php echo $item['CartItemID']; ?>"
+                                           class="item-checkbox"
+                                           data-price="<?php echo $item['Price'] * $item['Quantity']; ?>">
+                                           
+                                    <img src="../uploads/<?php echo htmlspecialchars($item['ProdIMG1']); ?>" 
+                                         class="product-image" 
+                                         alt="<?php echo htmlspecialchars($item['ProductName']); ?>">
+                                    
+                                    <div class="product-info">
+                                        <h5 class="product-name"><?php echo htmlspecialchars($item['ProductName']); ?></h5>
+                                        <p class="product-price">RM <?php echo number_format($item['Price'], 2); ?></p>
+                                        <?php if($item['StockQuantity'] < 5): ?>
+                                            <p class="stock-warning">
+                                                Only <?php echo $item['StockQuantity']; ?> left in stock!
+                                            </p>
+                                        <?php endif; ?>
                                     </div>
-                                    <div class="col-md-4">
-                                        <h5><?php echo htmlspecialchars($item['ProductName']); ?></h5>
+
+                                    <div class="quantity-control">
+                                        <button type="button" class="quantity-btn" onclick="updateQuantity(<?php echo $item['CartItemID']; ?>, -1)">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" 
+                                               class="quantity-input"
+                                               name="quantity[<?php echo $item['CartItemID']; ?>]" 
+                                               value="<?php echo $item['Quantity']; ?>"
+                                               min="1"
+                                               max="<?php echo $item['StockQuantity']; ?>"
+                                               data-price="<?php echo $item['Price']; ?>"
+                                               data-cart-item-id="<?php echo $item['CartItemID']; ?>"
+                                               onchange="handleQuantityChange(this)">
+                                        <button type="button" class="quantity-btn" onclick="updateQuantity(<?php echo $item['CartItemID']; ?>, 1)">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
                                     </div>
-                                    <div class="col-md-2">
-                                        <input type="number" class="form-control" name="quantity[<?php echo $item['CartItemID']; ?>]" value="<?php echo $item['Quantity']; ?>" min="1">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <p class="mb-0">$<?php echo number_format($item['Price'], 2); ?></p>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="submit" name="remove_item" class="btn btn-outline-danger" value="<?php echo $item['CartItemID']; ?>">
-                                            <i class="fas fa-trash"></i>
+
+                                    <div class="item-total">
+                                        <p class="item-total-price">
+                                            RM <?php echo number_format($item['Price'] * $item['Quantity'], 2); ?>
+                                        </p>
+                                        <button type="submit" 
+                                                name="remove_item" 
+                                                value="<?php echo $item['CartItemID']; ?>"
+                                                class="remove-item">
+                                            <i class="fas fa-trash"></i> Remove
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                         
-                        <div class="mt-3">
-                            <button type="submit" name="update_cart" class="btn btn-outline-dark">Update Cart</button>
+                        <div class="no-selection-message">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                            <h3>No Items Selected</h3>
+                            <p>Please select at least one item to proceed to checkout.</p>
                         </div>
                     </div>
                     
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Order Summary</h5>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Subtotal</span>
-                                    <span>$<?php echo number_format($total, 2); ?></span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Shipping</span>
-                                    <span>Free</span>
-                                </div>
-                                <hr>
-                                <div class="d-flex justify-content-between mb-3">
-                                    <strong>Total</strong>
-                                    <strong>$<?php echo number_format($total, 2); ?></strong>
-                                </div>
-                                <button type="submit" name="checkout" class="btn btn-dark w-100">Proceed to Checkout</button>
-                            </div>
+                    <div class="cart-summary">
+                        <h5>Order Summary</h5>
+                        <div class="selected-items-count">
+                            <span id="selectedCount">0</span> items selected
                         </div>
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="subtotal">RM 0.00</span>
+                        </div>
+                        <hr>
+                        <div class="summary-row">
+                            <strong>Total</strong>
+                            <strong id="total">RM 0.00</strong>
+                        </div>
+                        <button type="submit" name="checkout" class="checkout-btn" disabled>
+                            Proceed to Checkout
+                        </button>
                     </div>
                 </div>
             </form>
         <?php else: ?>
-            <div class="alert alert-info">
-                Your cart is empty. <a href="/newPHP/app/product/product.php">Continue shopping</a>
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart fa-3x"></i>
+                <h3>Your cart is empty</h3>
+                <p>Looks like you haven't added any items to your cart yet.</p>
+                <a href="../product/all_product.php" class="continue-shopping">
+                    Continue Shopping
+                </a>
             </div>
         <?php endif; ?>
     </div>
 
+    <script src="../js/cart.js"></script>
+    <?php require_once __DIR__ . '/../_foot.php'; ?>
 </body>
 </html>
-<?php require_once __DIR__ . '/../_foot.php'; ?>

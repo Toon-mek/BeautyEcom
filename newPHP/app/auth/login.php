@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['MemberID'];
             $_SESSION['user_role'] = 'member';
             $_SESSION['member_id'] = $user['MemberID']; // ✅ Needed for cart & profile
-            header("Location: ../index.php");
+            header("Location: /../index.php");
             exit();
         }
     } else {
