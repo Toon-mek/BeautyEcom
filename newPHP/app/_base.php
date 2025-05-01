@@ -578,17 +578,6 @@ function getPaymentDetails($pdo, $order_id) {
     return $stmt->fetch();
 }
 
-function getMemberProfilePhoto($member_id) {
-    global $pdo;
-    try {
-        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
-        $stmt->execute([$member_id]);
-        $member = $stmt->fetch();
-        return $member['ProfilePhoto'] ?: 'default-profile.png';
-    } catch (PDOException $e) {
-        error_log("Get Profile Photo Error: " . $e->getMessage());
-        return 'default-profile.png';
-    }
-}
+
 
 ?>

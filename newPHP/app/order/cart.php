@@ -40,8 +40,26 @@ $total = calculateCartTotal($cart_items);
                     <li><a href="/newPHP/app/order/cart.php" class="nav-link">Cart</a></li>
 
                     <?php if (isLoggedIn()): ?>
-                        <!-- Display Profile Link if the user is logged in -->
-                        <li><a href="/newPHP/app/member/memberindex.php" class="nav-link">Profile</a></li>
+                        <li class="profile-dropdown">
+                            <?php
+                            $profilePhoto = getMemberProfilePhoto($_SESSION['member_id']);
+                            $photoPath = "/newPHP/app/uploads/" . htmlspecialchars($profilePhoto);
+                            $defaultPhoto = "/newPHP/app/uploads/default-profile.png";
+                            
+                            // Check if file exists, if not use default
+                            if (!file_exists(__DIR__ . '/uploads/' . $profilePhoto)) {
+                                $photoPath = $defaultPhoto;
+                            }
+                            ?>
+                            <img src="<?php echo $photoPath; ?>" 
+                                 alt="Profile" 
+                                 class="profile-photo"
+                                 onerror="this.src='<?php echo $defaultPhoto; ?>'">
+                            <div class="dropdown-content">
+                                <a href="/newPHP/app/member/settings.php">Settings</a>
+                                <a href="/newPHP/app/auth/logout.php">Logout</a>
+                            </div>
+                        </li>
 
                         <!-- Display Logout Link -->
                         <li><a href="/newPHP/app/index.php" class="nav-link">Logout</a></li>

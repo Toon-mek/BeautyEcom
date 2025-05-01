@@ -1,18 +1,40 @@
 <?php
 require_once __DIR__ . '/../_base.php';
 
-$order_id = $_GET['order_id'] ?? null;
+// Ensure the order ID is passed in the URL
+if (!isset($_GET['order_id'])) {
+    die("Order ID not provided.");
+}
 
-// Redirect if the order is invalid
-$order = redirectIfInvalidOrder($pdo, $order_id);
+// Get the order ID from the URL
+$order_id = $_GET['order_id'];
 
-// Get order items
-$order_items = getOrderItems($pdo, $order_id);
+// Retrieve the order details from the database
+$stmt = $pdo->prepare("SELECT * FROM orders WHERE OrderID = ?");
+$stmt->execute([$order_id]);
+$order = $stmt->fetch();
 
-// Get payment details
-$payment = getPaymentDetails($pdo, $order_id);
+// If the order doesn't exist, show an error
+if (!$order) {
+    die("Order not found.");
+}
+
+// Retrieve the order items
+$stmt_items = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1 
+                             FROM order_items oi
+                             JOIN products p ON oi.ProductID = p.ProductID
+                             WHERE oi.OrderID = ?");
+$stmt_items->execute([$order_id]);
+$items = $stmt_items->fetchAll();
+
+// Retrieve payment details
+$stmt_payment = $pdo->prepare("SELECT * FROM payments WHERE OrderID = ?");
+$stmt_payment->execute([$order_id]);
+$payment = $stmt_payment->fetch();
 ?>
+
 <?php require_once __DIR__ . '/../_head.php'; ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,6 +46,7 @@ $payment = getPaymentDetails($pdo, $order_id);
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
             <a class="navbar-brand" href="index.php">Beauty & Wellness</a>
@@ -59,6 +82,7 @@ $payment = getPaymentDetails($pdo, $order_id);
     </nav>
 
     <div class="container py-5">
+        <!-- Confirmation Message -->
         <div class="text-center mb-5">
             <i class="fas fa-check-circle confirmation-icon"></i>
             <h1 class="mt-3">Thank You for Your Order!</h1>
@@ -66,7 +90,9 @@ $payment = getPaymentDetails($pdo, $order_id);
         </div>
 
         <div class="row">
+            <!-- Left Column: Order Details -->
             <div class="col-md-6">
+                <!-- Order Details Card -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">Order Details</h5>
@@ -76,6 +102,7 @@ $payment = getPaymentDetails($pdo, $order_id);
                     </div>
                 </div>
 
+                <!-- Customer Information Card -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">Customer Information</h5>
@@ -86,14 +113,16 @@ $payment = getPaymentDetails($pdo, $order_id);
                 </div>
             </div>
 
+            <!-- Right Column: Order Items and Payment Details -->
             <div class="col-md-6">
+                <!-- Order Items Card -->
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">Order Items</h5>
-                        <?php foreach($order_items as $item): ?>
+                        <?php foreach($items as $item): ?>
                             <div class="d-flex justify-content-between mb-2">
                                 <div>
-                                    <img src="<?php echo htmlspecialchars($item['ProdIMG1']); ?>" alt="<?php echo htmlspecialchars($item['ProductName']); ?>" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <img src="<?php echo !empty($item['ProdIMG1']) ? htmlspecialchars($item['ProdIMG1']) : 'path/to/default-image.jpg'; ?>" alt="<?php echo htmlspecialchars($item['ProductName']); ?>" style="width: 50px; height: 50px; object-fit: cover;">
                                     <span class="ms-2"><?php echo htmlspecialchars($item['ProductName']); ?> x <?php echo $item['OrderItemQTY']; ?></span>
                                 </div>
                                 <span>$<?php echo number_format($item['OrderItemPrice'] * $item['OrderItemQTY'], 2); ?></span>
@@ -107,22 +136,26 @@ $payment = getPaymentDetails($pdo, $order_id);
                     </div>
                 </div>
 
+                <!-- Payment Information Card -->
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Payment Information</h5>
                         <p><strong>Payment Method:</strong> <?php echo htmlspecialchars($payment['PaymentMethod']); ?></p>
-                        <p><strong>Payment Status:</strong> <span class="badge bg-success"><?php echo $payment['PaymentStatus']; ?></span></p>
+                        <p><strong>Payment Status:</strong> <span class="badge bg-<?php echo $payment['PaymentStatus'] === 'Completed' ? 'success' : ($payment['PaymentStatus'] === 'Pending' ? 'warning' : 'danger'); ?>">
+                            <?php echo $payment['PaymentStatus']; ?></span></p>
                         <p><strong>Amount Paid:</strong> $<?php echo number_format($payment['AmountPaid'], 2); ?></p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Continue Shopping Button -->
         <div class="text-center mt-4">
             <a href="products.php" class="btn btn-dark">Continue Shopping</a>
         </div>
     </div>
 
+    <!-- Footer -->
     <footer class="bg-dark text-white py-4">
         <div class="container">
             <div class="row">
@@ -150,4 +183,5 @@ $payment = getPaymentDetails($pdo, $order_id);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 <?php require_once __DIR__ . '/../_foot.php'; ?>
