@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/config.php';
+$pdo->exec("SET time_zone = '+08:00'");
 
 // ------------------------------
 // 🔐 User Authentication
@@ -819,6 +820,67 @@ function getMemberDetails($memberId) {
         error_log("Get Member Details Error: " . $e->getMessage());
         return null;
     }
+}
+
+// 🔍 Get member by email
+function findMemberByEmail($email)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM member WHERE Email = ?");
+    $stmt->execute([$email]);
+    return $stmt->fetch();
+}
+
+// 🔐 Insert password reset token
+function createPasswordResetToken($memberId) {
+    global $pdo;
+    $token = bin2hex(random_bytes(16));
+    $expire = date('Y-m-d H:i:s', strtotime('+24 hours'));
+    try {
+        $stmt = $pdo->prepare("INSERT INTO token (id, expire, user_id) VALUES (?, ?, ?)");
+        $stmt->execute([$token, $expire, $memberId]);
+    } catch (PDOException $e) {
+        echo "<strong>DB INSERT ERROR:</strong> " . $e->getMessage();
+        exit;
+    }
+
+    return $token;
+}
+// 🧪 Validate token and return member
+function getMemberByResetToken($token) {
+    global $pdo;
+
+    // Set matching timezone to prevent false expiry
+    date_default_timezone_set('Asia/Kuala_Lumpur');
+
+    $stmt = $pdo->prepare("
+        SELECT t.*, m.* 
+        FROM token t 
+        JOIN member m ON t.user_id = m.MemberID 
+        WHERE t.id = ? 
+          AND t.expire > NOW()
+        LIMIT 1
+    ");
+    $stmt->execute([$token]);
+    return $stmt->fetch();
+}
+
+// 🔄 Reset member password by token
+function resetPasswordByToken($token, $newPassword) {
+    global $pdo;
+
+    $member = getMemberByResetToken($token);
+    if (!$member) return false;
+
+    $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+
+    $stmt = $pdo->prepare("UPDATE member SET Password = ? WHERE MemberID = ?");
+    $stmt->execute([$hashed, $member['MemberID']]);
+
+    $stmt = $pdo->prepare("DELETE FROM token WHERE id = ?");
+    $stmt->execute([$token]);
+
+    return true;
 }
 
 ?>

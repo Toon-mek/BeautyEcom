@@ -1,38 +1,29 @@
 <?php
 require_once __DIR__ . '/../_base.php';
 
-$error = null;
-$success = null;
-$validToken = false;
-$token = $_GET['token'] ?? '';
+$token = $_POST['token'] ?? $_GET['token'] ?? '';
+$error = '';
+$success = '';
+$showForm = true;
 
-if ($token) {
-    $stmt = $pdo->prepare("SELECT MemberID FROM member WHERE ResetToken = ? AND ResetTokenExpiry > NOW()");
-    $stmt->execute([$token]);
-    $user = $stmt->fetch();
-    
-    if ($user) {
-        $validToken = true;
-    } else {
-        $error = "Invalid or expired reset link. Please request a new one.";
-    }
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
-    
-    if ($password !== $confirmPassword) {
+    $confirm = $_POST['confirm'] ?? '';
+    if (empty($password) || empty($confirm)) {
+        $error = "Both fields are required.";
+    } elseif ($password !== $confirm) {
         $error = "Passwords do not match.";
+    } elseif (strlen($password) < 6) {
+        $error = "Password must be at least 6 characters.";
     } else {
-        // Update password and clear reset token
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE member SET Password = ?, ResetToken = NULL, ResetTokenExpiry = NULL WHERE ResetToken = ?");
-        $stmt->execute([$hashedPassword, $token]);
-        
-        $success = "Password has been reset successfully!";
-        // Redirect to login after 3 seconds
-        header("refresh:3;url=login.php");
+        if (resetPasswordByToken($token, $password)) {
+            $_SESSION['success'] = "Password reset successful. Please login.";
+            header("Location: login.php");
+            exit;
+        } else {
+            $error = "Invalid or expired token.";
+            $showForm = false;
+        }
     }
 }
 ?>
@@ -40,76 +31,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password - Beauty & Wellness</title>
-    <link href="../css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Reset Password</title>
+    <link href="../css/style.css" rel="stylesheet" />
     <style>
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
+        .form-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            background-color: #e67e22;
+            color: white;
+            padding: 10px 0;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .alert-box {
             padding: 12px;
             border-radius: 5px;
             margin-bottom: 20px;
+            text-align: center;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
         }
     </style>
 </head>
 <body>
     <div class="form-container">
-        <h2 class="text-center mb-4">Reset Password</h2>
-        
-        <?php if($error): ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
+        <h2>Reset Password</h2>
+        <?php if ($error): ?>
+            <div class="alert-box alert-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
-        
-        <?php if($success): ?>
-            <div class="success-message">
-                <?php echo $success; ?>
-                <p>Redirecting to login page...</p>
+        <?php if ($showForm): ?>
+        <form method="post" onsubmit="return validateResetForm();">
+        <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
+            <div class="form-group">
+                <label for="password" class="form-label">New Password:</label>
+                <input type="password" class="form-input" id="password" name="password" required>
             </div>
-        <?php endif; ?>
 
-        <?php if($validToken && !$success): ?>
-            <form method="POST" action="" onsubmit="return validatePasswords();">
-                <div class="form-group">
-                    <label for="password" class="form-label">New Password</label>
-                    <input type="password" class="form-input" id="password" name="password" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirm_password" class="form-label">Confirm Password</label>
-                    <input type="password" class="form-input" id="confirm_password" name="confirm_password" required>
-                </div>
-                <div class="d-grid">
-                    <button type="submit" class="btn">Reset Password</button>
-                </div>
-            </form>
+            <div class="form-group">
+                <label for="confirm" class="form-label">Confirm Password:</label>
+                <input type="password" class="form-input" id="confirm" name="confirm" required>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn">Reset Password</button>
+            </div>
+        </form>
         <?php endif; ?>
-        
-        <div class="text-center mt-3">
-            <p><a href="login.php">Back to Login</a></p>
-        </div>
     </div>
-
-    <script>
-    function validatePasswords() {
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm_password').value;
-        
-        // Password validation
-        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$]).{8,}$/;
-        if (!passwordRegex.test(password)) {
-            alert("Password must be at least 8 characters and include numbers, letters, and one of !@#$.");
-            return false;
-        }
-        
-        // Check if passwords match
-        if (password !== confirmPassword) {
-            alert("Passwords do not match!");
-            return false;
-        }
-        
-        return true;
-    }
-    </script>
 </body>
-</html> 
+</html>
