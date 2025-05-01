@@ -277,9 +277,28 @@ body {
 .mb-2 { margin-bottom: 2rem; }
 
 .error-message {
-    color: #dc3545;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
+    background-color: #ffe0e0;
+    color: #c0392b;
+    padding: 12px 18px;
+    margin-bottom: 15px;
+    border: 1px solid #e74c3c;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    animation: slideFadeIn 0.4s ease forwards;
+    opacity: 1; /* Ensures it's visible */
+    transform: translateY(0); /* No need to slide it up after */
+}
+
+@keyframes slideFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .success-message {

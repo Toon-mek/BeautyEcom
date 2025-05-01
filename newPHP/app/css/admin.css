@@ -201,6 +201,8 @@
 }
 
 .member-table th {
+    min-width: 60px; /* or set different widths as needed */
+    white-space: nowrap;
     background: #f5f6fa;
     color: #2c3e50;
 }
@@ -347,4 +349,32 @@
 
 .crud-form .crud-btn {
     margin-top: 12px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.pagination a {
+    padding: 6px 12px;
+    background: #ecf0f1;
+    color: #2c3e50;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background 0.3s, color 0.3s;
+}
+
+.pagination a:hover {
+    background: #3498db;
+    color: #fff;
+}
+
+.pagination a.active {
+    background: #2c3e50;
+    color: white;
+    pointer-events: none;
 }
