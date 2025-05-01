@@ -591,4 +591,89 @@ function getMemberProfilePhoto($member_id) {
     }
 }
 
+// ------------------------------
+// 👤 Member Settings Functions
+// ------------------------------
+
+function updateMemberPhoto($memberId, $file) {
+    global $pdo;
+    if (isset($file) && $file['error'] === UPLOAD_ERR_OK) {
+        $targetDir = __DIR__ . '/uploads/';
+        $fileName = uniqid() . '_' . basename($file['name']);
+        $targetFile = $targetDir . $fileName;
+        $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+        
+        if (in_array($imageFileType, ['jpg', 'jpeg', 'png', 'gif'])) {
+            if (move_uploaded_file($file['tmp_name'], $targetFile)) {
+                try {
+                    $stmt = $pdo->prepare("UPDATE member SET ProfilePhoto=? WHERE MemberID=?");
+                    $stmt->execute([$fileName, $memberId]);
+                    return ["success" => "Profile photo updated successfully!"];
+                } catch (PDOException $e) {
+                    error_log("Photo Update Error: " . $e->getMessage());
+                    return ["error" => "Error updating profile photo"];
+                }
+            }
+        }
+    }
+    return ["error" => "Invalid file upload"];
+}
+
+function updateMemberDetails($memberId, $data) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("UPDATE member SET Name=?, Email=?, PhoneNumber=?, Gender=?, DateOfBirth=?, Address=? WHERE MemberID=?");
+        $stmt->execute([
+            $data['name'] ?? '',
+            $data['email'] ?? '',
+            $data['phone'] ?? '',
+            $data['gender'] ?? '',
+            $data['dob'] ?? '',
+            $data['address'] ?? '',
+            $memberId
+        ]);
+        return ["success" => "Profile updated successfully!"];
+    } catch (PDOException $e) {
+        error_log("Profile Update Error: " . $e->getMessage());
+        return ["error" => "Error updating profile"];
+    }
+}
+
+function updateMemberPassword($memberId, $currentPassword, $newPassword, $confirmPassword) {
+    global $pdo;
+    if ($newPassword !== $confirmPassword) {
+        return ["error" => "New passwords do not match"];
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT Password FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        $member = $stmt->fetch();
+        
+        if (!$member || !password_verify($currentPassword, $member['Password'])) {
+            return ["error" => "Current password is incorrect"];
+        }
+        
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("UPDATE member SET Password = ? WHERE MemberID = ?");
+        $stmt->execute([$hashedPassword, $memberId]);
+        return ["success" => "Password changed successfully!"];
+    } catch (PDOException $e) {
+        error_log("Password Update Error: " . $e->getMessage());
+        return ["error" => "Error changing password"];
+    }
+}
+
+function getMemberDetails($memberId) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log("Get Member Details Error: " . $e->getMessage());
+        return null;
+    }
+}
+
 ?>

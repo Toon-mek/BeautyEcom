@@ -679,3 +679,123 @@ body {
     width: 80%;
     max-width: 300px;
 }
+
+/* Member Settings Page Styles */
+.settings-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.settings-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+}
+
+.settings-title {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.profile-photo-container {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.current-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Form Styles - Member Settings */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-input:focus {
+    border-color: #e67e22;
+    outline: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #e67e22;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #d35400;
+}
+
+/* Message Styles */
+.error-message {
+    background-color: #ffe0e0;
+    color: #c0392b;
+    padding: 12px 18px;
+    margin-bottom: 15px;
+    border: 1px solid #e74c3c;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    animation: slideFadeIn 0.4s ease forwards;
+}
+
+.success-message {
+    background-color: #e0ffe0;
+    color: #27ae60;
+    padding: 12px 18px;
+    margin-bottom: 15px;
+    border: 1px solid #2ecc71;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    animation: slideFadeIn 0.4s ease forwards;
+}
+
+@keyframes slideFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
