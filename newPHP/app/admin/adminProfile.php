@@ -3,19 +3,36 @@ require_once __DIR__ . '/../_base.php';
 requireLogin('staff');
 
 $staff_id = $_SESSION['staff_id'] ?? null;
-$stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
-$stmt->execute([$staff_id]);
-$staff = $stmt->fetch(PDO::FETCH_ASSOC);
+$isManager = isManager($staff_id);
 
-if (!$staff) {
-    echo "<script>alert('Staff not found');</script>";
+// Check if user is manager or staff and get appropriate data
+if ($isManager) {
+    $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
+    $stmt->execute([$staff_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $nameField = 'ManagerName';
+    $photoField = 'ManagerProfilePhoto';
+    $table = 'manager';
+    $usernameField = 'ManagerUsername';
+} else {
+    $stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
+    $stmt->execute([$staff_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $nameField = 'StaffName';
+    $photoField = 'StaffProfilePhoto';
+    $table = 'staff';
+    $usernameField = 'StaffUsername';
+}
+
+if (!$user) {
+    echo "<script>alert('User not found');</script>";
     exit;
 }
 
 if (isset($_POST['update_profile'])) {
     $name = $_POST['name'];
     $password = $_POST['password'];
-    $photoName = $staff['StaffProfilePhoto'] ?? null;
+    $photoName = $user[$photoField] ?? null;
 
     if (!empty($_FILES['photo']['name'])) {
         $photoName = uniqid() . "_" . basename($_FILES['photo']['name']);
@@ -24,16 +41,15 @@ if (isset($_POST['update_profile'])) {
 
     if (!empty($password)) {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("UPDATE staff SET StaffName=?, StaffProfilePhoto=?, Password=? WHERE StaffUsername=?");
+        $stmt = $pdo->prepare("UPDATE $table SET $nameField=?, $photoField=?, Password=? WHERE $usernameField=?");
         $stmt->execute([$name, $photoName, $hashed, $staff_id]);
     } else {
-        $stmt = $pdo->prepare("UPDATE staff SET StaffName=?, StaffProfilePhoto=? WHERE StaffUsername=?");
+        $stmt = $pdo->prepare("UPDATE $table SET $nameField=?, $photoField=? WHERE $usernameField=?");
         $stmt->execute([$name, $photoName, $staff_id]);
     }
 
     $_SESSION['staff_name'] = $name;
     echo "<script>window.onload = () => alert('Profile updated successfully!');</script>";
-    // optional redirect: header("Location: adminProfile.php"); exit;
 }
 ?>
 
@@ -106,7 +122,6 @@ if (isset($_POST['update_profile'])) {
 .logout-btn:hover {
     background: #c0392b;
 }
-<style>
     input#edit_name_field {
         width: 100%;
         height: 38px;
@@ -140,17 +155,15 @@ if (isset($_POST['update_profile'])) {
             <h2>Profile Management</h2>
 
             <div style="text-align:center;">
-                <img src="../uploads/<?php echo htmlspecialchars($staff['StaffProfilePhoto'] ?? 'default-profile.png'); ?>" alt="Staff Photo">
+                <img src="../uploads/<?php echo htmlspecialchars($user[$photoField] ?? 'default-profile.png'); ?>" alt="Profile Photo">
             </div>
 
-            <label for="edit_name_field"><strong>Staff Name</strong></label>
-<div class="input-edit-wrapper" style="display: flex; flex-direction: column; gap: 5px;">
-    <input type="text" name="name" id="edit_name_field"
-        value="<?php echo htmlspecialchars($staff['StaffName']); ?>" readonly>
-
-    <button type="button" id="editToggleBtn" onclick="toggleEdit()" class="tiny-btn">Edit</button>
-</div>
-
+            <label for="edit_name_field"><strong><?php echo $isManager ? 'Manager' : 'Staff' ?> Name</strong></label>
+            <div class="input-edit-wrapper" style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="text" name="name" id="edit_name_field"
+                    value="<?php echo htmlspecialchars($user[$nameField]); ?>" readonly>
+                <button type="button" id="editToggleBtn" onclick="toggleEdit()" class="tiny-btn">Edit</button>
+            </div>
 
             <label>New Password (leave blank to keep current)</label>
             <input type="password" name="password">

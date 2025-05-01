@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__ . '/../_base.php'; // This must be first!
+require_once __DIR__ . '/../_base.php';
 requireLogin('staff');
-
 $isManager = isManager($_SESSION['staff_id']);
 $displayName = getDisplayName();
 ?>
