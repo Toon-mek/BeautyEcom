@@ -258,53 +258,128 @@ function calculateCartTotal($cart_items)
 function handleCartActions($pdo)
 {
     if (!isset($_SESSION['member_id'])) {
-        header("Location: ../auth/login.php");
-        exit();
+        return;
     }
 
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-        if (isset($_POST['update_cart']) && isset($_POST['quantity'])) {
-            foreach ($_POST['quantity'] as $cart_item_id => $quantity) {
-                updateCartItem($pdo, $cart_item_id, $quantity);
-            }
-        } elseif (isset($_POST['remove_item'])) {
-            removeCartItem($pdo, $_POST['remove_item']);
-        } elseif (isset($_POST['checkout'])) {
-            header("Location: checkout.php");
-            exit();
+    // Handle remove item
+    if (isset($_POST['remove_item'])) {
+        $cartItemId = $_POST['remove_item'];
+        removeCartItem($pdo, $cartItemId);
+    }
+
+    // Handle update cart quantities
+    if (isset($_POST['update_cart']) && isset($_POST['quantity'])) {
+        foreach ($_POST['quantity'] as $cartItemId => $quantity) {
+            updateCartItemQuantity($pdo, $cartItemId, $quantity);
         }
+    }
+
+    // Handle checkout
+    if (isset($_POST['checkout']) && isset($_POST['selected_items'])) {
+        processCheckout($pdo, $_POST['selected_items']);
     }
 }
 
-function processCheckout($pdo, $cart_items, $total) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_method'])) {
-        try {
-            $pdo->beginTransaction();
+function updateCartItemQuantity($pdo, $cartItemId, $quantity) {
+    try {
+        // Start transaction
+        $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("INSERT INTO `order` (MemberID, OrderTotalAmount, OrderDate, OrderStatus) VALUES (?, ?, NOW(), 'Pending')");
-            $stmt->execute([$_SESSION['member_id'], $total]);
-            $orderId = $pdo->lastInsertId();
+        // Get product information and current cart item
+        $stmt = $pdo->prepare("
+            SELECT p.ProductID, p.Quantity as StockQuantity, ci.Quantity as CartQuantity 
+            FROM cartitem ci 
+            JOIN product p ON ci.ProductID = p.ProductID 
+            WHERE ci.CartItemID = ?
+        ");
+        $stmt->execute([$cartItemId]);
+        $item = $stmt->fetch();
 
-            foreach ($cart_items as $item) {
-                $stmt = $pdo->prepare("INSERT INTO orderitem (OrderID, ProductID, OrderItemQTY, OrderItemPrice) VALUES (?, ?, ?, ?)");
-                $stmt->execute([$orderId, $item['ProductID'], $item['Quantity'], $item['Price']]);
-            }
-
-            $stmt = $pdo->prepare("INSERT INTO payment (OrderID, PaymentMethod, PaymentStatus, AmountPaid) VALUES (?, ?, 'Paid', ?)");
-            $stmt->execute([$orderId, $_POST['payment_method'], $total]);
-
-            $stmt = $pdo->prepare("UPDATE cart SET CartStatus = 'Inactive' WHERE MemberID = ? AND CartStatus = 'Active'");
-            $stmt->execute([$_SESSION['member_id']]);
-
-            $pdo->commit();
-            header("Location: order_confirmation.php?order_id=" . $orderId);
-            exit();
-        } catch (PDOException $e) {
-            $pdo->rollBack();
-            return "Checkout failed: " . $e->getMessage();
+        if (!$item) {
+            throw new Exception("Cart item not found");
         }
+
+        // Validate quantity
+        $quantity = max(1, min((int)$quantity, $item['StockQuantity']));
+
+        // Update cart item quantity
+        $stmt = $pdo->prepare("UPDATE cartitem SET Quantity = ? WHERE CartItemID = ?");
+        $stmt->execute([$quantity, $cartItemId]);
+
+        // Commit transaction
+        $pdo->commit();
+
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $pdo->rollBack();
+        $_SESSION['error'] = "Failed to update cart quantity.";
     }
-    return null;
+}
+
+function processCheckout($pdo, $selectedItems) {
+    try {
+        // Start transaction
+        $pdo->beginTransaction();
+
+        // Validate stock availability for all selected items
+        $stmt = $pdo->prepare("
+            SELECT ci.CartItemID, ci.ProductID, ci.Quantity as CartQuantity, 
+                   p.Quantity as StockQuantity, p.ProductName 
+            FROM cartitem ci 
+            JOIN product p ON ci.ProductID = p.ProductID 
+            WHERE ci.CartItemID IN (" . str_repeat('?,', count($selectedItems) - 1) . "?)
+        ");
+        $stmt->execute($selectedItems);
+        $items = $stmt->fetchAll();
+
+        foreach ($items as $item) {
+            if ($item['CartQuantity'] > $item['StockQuantity']) {
+                throw new Exception("Not enough stock for {$item['ProductName']}");
+            }
+        }
+
+        // Create order
+        $stmt = $pdo->prepare("
+            INSERT INTO orders (MemberID, OrderDate, OrderStatus) 
+            VALUES (?, NOW(), 'Pending')
+        ");
+        $stmt->execute([$_SESSION['member_id']]);
+        $orderId = $pdo->lastInsertId();
+
+        // Create order items and update stock
+        foreach ($items as $item) {
+            // Add to order items
+            $stmt = $pdo->prepare("
+                INSERT INTO orderitem (OrderID, ProductID, Quantity) 
+                VALUES (?, ?, ?)
+            ");
+            $stmt->execute([$orderId, $item['ProductID'], $item['CartQuantity']]);
+
+            // Update stock
+            $stmt = $pdo->prepare("
+                UPDATE product 
+                SET Quantity = Quantity - ? 
+                WHERE ProductID = ?
+            ");
+            $stmt->execute([$item['CartQuantity'], $item['ProductID']]);
+
+            // Remove from cart
+            $stmt = $pdo->prepare("DELETE FROM cartitem WHERE CartItemID = ?");
+            $stmt->execute([$item['CartItemID']]);
+        }
+
+        // Commit transaction
+        $pdo->commit();
+
+        // Redirect to order confirmation
+        header("Location: ../order/confirmation.php?order_id=" . $orderId);
+        exit();
+
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $pdo->rollBack();
+        $_SESSION['error'] = $e->getMessage();
+    }
 }
 
 // ------------------------------
