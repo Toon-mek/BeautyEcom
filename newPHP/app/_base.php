@@ -44,6 +44,15 @@ function isLoggedIn()
 {
     return isset($_SESSION['member_id']);
 }
+
+function logoutUser() {
+    session_start();
+    session_unset();
+    session_destroy();
+    header("Location: /newPHP/app/index.php");
+    exit();
+}
+
 function redirectIfNotLoggedIn() {
     if (!isset($_SESSION['member_id'])) {
         header("Location: ../auth/login.php");
@@ -559,6 +568,19 @@ function getPaymentDetails($pdo, $order_id) {
     $stmt = $pdo->prepare("SELECT * FROM payment WHERE OrderID = ?");
     $stmt->execute([$order_id]);
     return $stmt->fetch();
+}
+
+function getMemberProfilePhoto($member_id) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
+        $stmt->execute([$member_id]);
+        $member = $stmt->fetch();
+        return $member['ProfilePhoto'] ?: 'default-profile.png';
+    } catch (PDOException $e) {
+        error_log("Get Profile Photo Error: " . $e->getMessage());
+        return 'default-profile.png';
+    }
 }
 
 ?>
