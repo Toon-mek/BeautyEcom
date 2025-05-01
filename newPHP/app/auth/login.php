@@ -1,7 +1,11 @@
 <?php
 require_once __DIR__ . '/../_base.php';
-
 $error = null;
+$success = null;
+
+if (isset($_GET['registered']) && $_GET['registered'] == 1) {
+    $success = "Registration successful! Please login with your credentials.";
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
@@ -28,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -46,13 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
         }
 
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            animation: slideDown 0.4s ease;
+            text-align: center;
+        }
+
         @keyframes slideDown {
             from { transform: translateY(-15px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
-
 <body>
     <div class="staff-login">
         <a href="staffLogin.php" class="staff-login-link">Staff Login</a>
@@ -64,9 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </button>
 
         <h2 class="text-center mb-4">Login</h2>
-
         <?php if ($error): ?>
             <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+        <?php if ($success): ?>
+            <div class="success-message"><?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
         <form method="POST" action="">
@@ -78,6 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-input" id="password" name="password" required />
+            </div>
+
+            <div class="form-group">
+                <a href="forgotPassword.php" class="forgot-password-link">Forgot Password?</a>
             </div>
 
             <div class="d-grid">
