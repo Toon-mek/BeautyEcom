@@ -3,14 +3,14 @@ session_start();  // Start session
 include('../config.php');  // Include database configuration
 
 // Ensure the user is logged in
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['member_id'])) {
     // If the user is not logged in, redirect to login page
     header('Location: ../auth/login.php');
     exit();
 }
 
 // Fetch the logged-in user's details from the database
-$user_id = $_SESSION['user_id'];
+$user_id = $_SESSION['member_id'];
 $stmt = $pdo->prepare("SELECT * FROM member WHERE MemberID = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
@@ -34,7 +34,7 @@ $user = $stmt->fetch();
 
         <!-- Display Profile Photo -->
         <div class="profile-picture">
-            <img src="../uploads/<?= htmlspecialchars($user['ProfilePhoto'] ?: 'default.jpg'); ?>" alt="Profile Picture">
+            <img src="../uploads/<?= htmlspecialchars($user['ProfilePhoto'] ?: 'defaultprofilephoto.jpg'); ?>" alt="Profile Picture">
         </div>
 
         <!-- Profile Picture Upload -->

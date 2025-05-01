@@ -42,6 +42,6 @@ $isManager = isManager($_SESSION['staff_id']);
             <a href="staffList.php"><span>Staff Management</span></a>
         </li>
         <?php endif; ?>
-        <li><a href="adminProfile.php">Profile</a></li>
+        <li><a href="adminProfile.php">Settings</a></li>
     </ul>
 </div>

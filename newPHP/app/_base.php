@@ -13,8 +13,9 @@ function registerUser($name, $email, $password, $phone, $gender, $dob)
     global $pdo;
     try {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO member (Name, Email, Password, PhoneNumber, Gender, DateOfBirth) VALUES (?, ?, ?, ?, ?, ?)");
-        return $stmt->execute([$name, $email, $hashedPassword, $phone, $gender, $dob]);
+        $defaultPhoto = 'defaultprofilephoto.jpg';
+        $stmt = $pdo->prepare("INSERT INTO member (Name, Email, Password, PhoneNumber, Gender, DateOfBirth, ProfilePhoto) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        return $stmt->execute([$name, $email, $hashedPassword, $phone, $gender, $dob, $defaultPhoto]);
     } catch (PDOException $e) {
         error_log("Registration Error: " . $e->getMessage());
         return false;
@@ -49,7 +50,7 @@ function isLoggedIn()
 function logoutUser() {
     session_unset();
     session_destroy();
-    header("Location: /../index.php");
+    header("Location: ../index.php");
     exit();
 }
 

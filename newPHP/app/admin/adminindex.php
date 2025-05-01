@@ -10,6 +10,7 @@ $displayName = getDisplayName();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Beauty & Wellness</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="../css/admin.css" rel="stylesheet">
 </head>
 <body>
@@ -22,7 +23,9 @@ $displayName = getDisplayName();
         </div>
         <div class="admin-dashboard-cards">
             <div class="admin-dashboard-card">
-                <div class="admin-dashboard-icon" style="background:#eaf6fb;color:#3498db;">👥</div>
+                <div class="admin-dashboard-icon" style="background:#eaf6fb;color:#3498db;">
+                    <i class="fa fa-user-circle" aria-hidden="true"></i>
+                </div>
                 <div class="admin-dashboard-info">
                     <h3>Total Members</h3>
                     <p><?php echo getTotalMembers(); ?></p>
