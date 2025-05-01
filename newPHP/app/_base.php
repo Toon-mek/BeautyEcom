@@ -41,9 +41,23 @@
         return false;
     }    
 
-    function isLoggedIn()
-    {
-        return isset($_SESSION['member_id']);
+function isLoggedIn()
+{
+    return isset($_SESSION['member_id']);
+}
+
+function logoutUser() {
+    session_start();
+    session_unset();
+    session_destroy();
+    header("Location: /newPHP/app/index.php");
+    exit();
+}
+
+function redirectIfNotLoggedIn() {
+    if (!isset($_SESSION['member_id'])) {
+        header("Location: ../auth/login.php");
+        exit();
     }
     function redirectIfNotLoggedIn() {
         if (!isset($_SESSION['member_id'])) {
