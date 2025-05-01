@@ -2,6 +2,12 @@
 session_start();
 require_once __DIR__ . '/../_base.php';
 
+// Ensure user is logged in before proceeding with cart actions
+if (!isLoggedIn()) {
+    header("Location: ../auth/login.php");
+    exit();
+}
+
 // Handle cart actions
 handleCartActions($pdo);
 
@@ -11,7 +17,8 @@ $cart_items = getCartItems($pdo);
 // Calculate total
 $total = calculateCartTotal($cart_items);
 ?>
-<?php require_once __DIR__ . '/../_head.php'; ?>
+  <!-- Include header here -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,40 +29,32 @@ $total = calculateCartTotal($cart_items);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">Beauty & Wellness</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="products.php">Products</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="categories.php">Categories</a>
-                    </li>
-                </ul>
-                <div class="d-flex">
-                    <a href="cart.php" class="btn btn-outline-dark me-2">
-                        <i class="fas fa-shopping-cart"></i> Cart
-                    </a>
-                    <?php if(isset($_SESSION['member_id'])): ?>
-                        <a href="profile.php" class="btn btn-outline-dark me-2">Profile</a>
-                        <a href="/../auth/logout.php" class="btn btn-outline-dark">Logout</a>
-                    <?php else: ?>
-                        <a href="/../auth/login.php" class="btn btn-outline-dark me-2">Login</a>
-                        <a href="/../auth/register.php" class="btn btn-dark">Register</a>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <!-- Header Section (Included once) -->
+    <header class="main-header">
+        <div class="header-container">
+            <a href="/newPHP/app/index.php" class="header-logo">Beauty & Wellness</a>
+            <nav class="header-nav">
+                <ul class="nav-list">
+                    <li><a href="/newPHP/app/index.php" class="nav-link">Home</a></li>
+                    <li><a href="/newPHP/app/product/product.php" class="nav-link">Products</a></li>
+                    <li><a href="/newPHP/app/order/cart.php" class="nav-link">Cart</a></li>
 
+                    <?php if (isLoggedIn()): ?>
+                        <!-- Display Profile Link if the user is logged in -->
+                        <li><a href="/newPHP/app/member/memberindex.php" class="nav-link">Profile</a></li>
+
+                        <!-- Display Logout Link -->
+                        <li><a href="/newPHP/app/index.php" class="nav-link">Logout</a></li>
+                    <?php else: ?>
+                        <!-- Display Login Link if the user is not logged in -->
+                        <li><a href="/newPHP/app/auth/login.php" class="nav-link">Log In</a></li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Cart Content Section -->
     <div class="container py-5">
         <h1 class="mb-4">Shopping Cart</h1>
         
@@ -117,36 +116,11 @@ $total = calculateCartTotal($cart_items);
             </form>
         <?php else: ?>
             <div class="alert alert-info">
-                Your cart is empty. <a href="products.php">Continue shopping</a>
+                Your cart is empty. <a href="/newPHP/app/product/product.php">Continue shopping</a>
             </div>
         <?php endif; ?>
     </div>
 
-    <footer class="bg-dark text-white py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5>About Us</h5>
-                    <p>Your trusted source for premium health and beauty products.</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="index.php" class="text-white">Home</a></li>
-                        <li><a href="products.php" class="text-white">Products</a></li>
-                        <li><a href="contact.php" class="text-white">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5>Contact Us</h5>
-                    <p>Email: info@beautywellness.com<br>
-                    Phone: (123) 456-7890</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 <?php require_once __DIR__ . '/../_foot.php'; ?>
