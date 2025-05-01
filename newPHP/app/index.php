@@ -6,8 +6,25 @@ require_once __DIR__ . '/_base.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/_head.php';
 
-$categories = getCategories();
-$featuredProducts = getProducts();
+// Fetch categories and one featured product from each category
+$categories = fetchAllCategories($pdo);
+$featuredProducts = [];
+
+foreach ($categories as $category) {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.CategoryName 
+        FROM product p 
+        LEFT JOIN category c ON p.CategoryID = c.CategoryID 
+        WHERE p.CategoryID = :category_id 
+        ORDER BY p.ProductID DESC 
+        LIMIT 1
+    ");
+    $stmt->execute([':category_id' => $category['CategoryID']]);
+    $product = $stmt->fetch();
+    if ($product) {
+        $featuredProducts[] = $product;
+    }
+}
 ?>
 
 <div class="hero-section">

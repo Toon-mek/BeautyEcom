@@ -17,9 +17,85 @@ handleEditProduct($pdo);
 // Handle Add Product
 handleAddProduct($pdo);
 
-// Fetch all products and categories
-$products = fetchAllProducts($pdo);
+// Allowed sort columns and directions
+$allowedSort = ['ProductID', 'CategoryName', 'ProductName', 'Price', 'Quantity'];
+$allowedDir = ['asc', 'desc'];
+
+$sort = $_GET['sort'] ?? 'ProductID';
+$dir = $_GET['order'] ?? 'desc';
+$search = $_GET['search'] ?? '';
+$categoryFilter = $_GET['category_filter'] ?? '';
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+
+// Validate sort and order
+if (!in_array($sort, $allowedSort)) {
+    $sort = 'ProductID';
+}
+
+if (!in_array(strtolower($dir), $allowedDir)) {
+    $dir = 'desc';
+}
+
+// Build WHERE clause
+$where = '';
+$params = [];
+$whereClauses = [];
+
+if (!empty($search)) {
+    $whereClauses[] = "(ProductName LIKE :search_name OR Description LIKE :search_desc)";
+    $params[':search_name'] = "%$search%";
+    $params[':search_desc'] = "%$search%";
+}
+
+if (!empty($categoryFilter)) {
+    $whereClauses[] = "p.CategoryID = :category";
+    $params[':category'] = $categoryFilter;
+}
+
+if ($whereClauses) {
+    $where = 'WHERE ' . implode(' AND ', $whereClauses);
+}
+
+// Count for pagination
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM product p $where");
+$countStmt->execute($params);
+$totalProducts = $countStmt->fetchColumn();
+$totalPages = ceil($totalProducts / $perPage);
+
+// Main query with pagination
+$query = "SELECT p.*, c.CategoryName 
+          FROM product p 
+          LEFT JOIN category c ON p.CategoryID = c.CategoryID 
+          $where 
+          ORDER BY $sort $dir 
+          LIMIT :limit OFFSET :offset";
+
+$stmt = $pdo->prepare($query);
+
+// Bind parameters
+foreach ($params as $key => $value) {
+    $stmt->bindValue($key, $value);
+}
+$stmt->bindValue(':limit', (int) $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+
+$stmt->execute();
+$products = $stmt->fetchAll();
+
+// Fetch categories for filter dropdown
 $categories = fetchAllCategories($pdo);
+
+// Sorting link helper
+function buildSortLink($column, $label)
+{
+    $currentSort = $_GET['sort'] ?? 'ProductID';
+    $currentDir = $_GET['order'] ?? 'desc';
+    $nextDir = ($currentSort === $column && $currentDir === 'asc') ? 'desc' : 'asc';
+    $arrow = ($currentSort === $column) ? ($currentDir === 'asc' ? '↑' : '↓') : '';
+    return "<a href='?sort=$column&order=$nextDir'>" . htmlspecialchars($label) . " $arrow</a>";
+}
 ?>
 
 <!DOCTYPE html>
@@ -35,17 +111,43 @@ $categories = fetchAllCategories($pdo);
     <?php include 'adminSidebar.php'; ?>
     <div class="admin-main-content">
         <h1>Product Management</h1>
+        
+        <form method="GET" style="margin-bottom: 20px;">
+            <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search products..." class="crud-select">
+            <select name="category_filter" class="crud-select">
+                <option value="">All Categories</option>
+                <?php foreach ($categories as $cat): ?>
+                    <option value="<?php echo $cat['CategoryID']; ?>" 
+                            <?php echo ($categoryFilter == $cat['CategoryID']) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($cat['CategoryName']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <select name="sort">
+                <option value="ProductID" <?php echo ($sort === 'ProductID') ? 'selected' : ''; ?>>ID</option>
+                <option value="CategoryName" <?php echo ($sort === 'CategoryName') ? 'selected' : ''; ?>>Category</option>
+                <option value="ProductName" <?php echo ($sort === 'ProductName') ? 'selected' : ''; ?>>Name</option>
+                <option value="Price" <?php echo ($sort === 'Price') ? 'selected' : ''; ?>>Price</option>
+                <option value="Quantity" <?php echo ($sort === 'Quantity') ? 'selected' : ''; ?>>Quantity</option>
+            </select>
+            <select name="order">
+                <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
+                <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
+            </select>
+        </form>
+
         <button class="crud-btn add-btn" onclick="showAddForm()" style="margin-bottom:18px;background:#27ae60;color:#fff;">Add Product</button>
+        
         <!-- Product Table -->
         <table class="product-table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Category</th>
-                    <th>Name</th>
+                    <th><?php echo buildSortLink('ProductID', 'ID'); ?></th>
+                    <th><?php echo buildSortLink('CategoryName', 'Category'); ?></th>
+                    <th><?php echo buildSortLink('ProductName', 'Name'); ?></th>
                     <th>Description</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
+                    <th><?php echo buildSortLink('Price', 'Price'); ?></th>
+                    <th><?php echo buildSortLink('Quantity', 'Quantity'); ?></th>
                     <th>Image 1</th>
                     <th>Image 2</th>
                     <th>Image 3</th>
@@ -100,6 +202,17 @@ $categories = fetchAllCategories($pdo);
             <?php endforeach; ?>
             </tbody>
         </table>
+
+        <?php if ($totalPages > 1): ?>
+            <div class="pagination">
+                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                    <a href="?sort=<?php echo $sort; ?>&order=<?php echo $dir; ?>&search=<?php echo urlencode($search); ?>&category_filter=<?php echo urlencode($categoryFilter); ?>&page=<?php echo $p; ?>"
+                       class="<?php echo $p == $page ? 'active' : ''; ?>">
+                        <?php echo $p; ?>
+                    </a>
+                <?php endfor; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 <!-- Edit Product Modal -->

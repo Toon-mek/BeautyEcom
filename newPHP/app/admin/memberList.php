@@ -96,7 +96,7 @@ function buildSortLink($column, $label)
             <h1>Member Management</h1>
 
             <form method="GET" style="margin-bottom: 20px;">
-                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search name or email" class="crud-select">
+                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search members..." class="crud-select">
                 <select name="status_filter" class="crud-select">
                     <option value="">All Status</option>
                     <option value="Active" <?php if ($statusFilter === 'Active') {
@@ -109,30 +109,16 @@ function buildSortLink($column, $label)
                                             ?>>Blocked</option>
                 </select>
                 <select name="sort">
-                    <option value="CreatedAt" <?php if ($sort === 'CreatedAt') {
-                                                    echo 'selected';
-                                                }
-                                                ?>>Created At</option>
-                    <option value="Name" <?php if ($sort === 'Name') {
-                                                echo 'selected';
-                                            }
-                                            ?>>Name</option>
-                    <option value="Email" <?php if ($sort === 'Email') {
-                                                echo 'selected';
-                                            }
-                                            ?>>Email</option>
+                    <option value="MemberID" <?php echo ($sort === 'MemberID') ? 'selected' : ''; ?>>ID</option>
+                    <option value="Username" <?php echo ($sort === 'Username') ? 'selected' : ''; ?>>Username</option>
+                    <option value="Email" <?php echo ($sort === 'Email') ? 'selected' : ''; ?>>Email</option>
+                    <option value="Phone" <?php echo ($sort === 'Phone') ? 'selected' : ''; ?>>Phone</option>
+                    <option value="Address" <?php echo ($sort === 'Address') ? 'selected' : ''; ?>>Address</option>
                 </select>
                 <select name="order">
-                    <option value="desc" <?php if ($dir === 'desc') {
-                                                echo 'selected';
-                                            }
-                                            ?>>Descending</option>
-                    <option value="asc" <?php if ($dir === 'asc') {
-                                            echo 'selected';
-                                        }
-                                        ?>>Ascending</option>
+                    <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
+                    <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
                 </select>
-                <button type="submit" class="crud-btn" style="background:#3498db;color:white;">Apply</button>
             </form>
 
             <?php if (isset($_GET['success'])): ?>
