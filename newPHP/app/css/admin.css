@@ -1,0 +1,350 @@
+/* Admin Dashboard Styles */
+.admin-dashboard-header {
+    margin-bottom: 30px;
+    padding: 20px 30px 10px 0;
+    width: 100%;
+    max-width: 900px;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.admin-dashboard-header h1 {
+    font-size: 2.2rem;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.admin-dashboard-header p {
+    color: #888;
+    font-size: 1.1rem;
+}
+
+.admin-dashboard-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 32px;
+    justify-content: center;
+}
+
+.admin-dashboard-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+    padding: 28px 32px;
+    flex: 1 1 220px;
+    min-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    min-width: 0;
+}
+
+.admin-dashboard-card:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 6px 18px rgba(44, 62, 80, 0.13);
+}
+
+.admin-dashboard-icon {
+    font-size: 2.5rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #f5f6fa;
+    color: #2c3e50;
+}
+
+.admin-dashboard-card .admin-dashboard-info {
+    flex: 1;
+}
+
+.admin-dashboard-card h3 {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.admin-dashboard-card p {
+    margin: 0;
+    font-size: 1.7rem;
+    font-weight: bold;
+    color: #3498db;
+}
+
+@media (max-width: 900px) {
+    .admin-dashboard-cards {
+        flex-direction: column;
+        gap: 18px;
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+}
+
+/* Admin Sidebar Styles */
+.admin-flex-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.admin-sidebar {
+    flex: 0 0 250px; /* Fixed width */
+    background-color: #2c3e50;
+    color: #fff;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 20px 0;
+}
+
+.admin-sidebar-header {
+    padding: 20px;
+    text-align: center;
+    border-bottom: 1px solid #34495e;
+}
+
+.admin-sidebar-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.admin-sidebar-header p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+    color: #bdc3c7;
+}
+
+.admin-sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.admin-sidebar-menu li {
+    margin: 5px 0;
+}
+
+.admin-sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.admin-sidebar-menu a:hover {
+    background-color: #34495e;
+}
+
+.admin-sidebar-menu i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+}
+
+.admin-manager-only {
+    border-left: 3px solid #e74c3c;
+}
+
+.admin-main-content {
+    flex: 1 1 auto;
+    padding: 40px 40px 0 40px;
+    background: #f5f6fa;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
+    margin-left: 160px; /* Sidebar width */
+    align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+    .admin-main-content {
+        padding: 20px 5vw 0 5vw;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-flex-container {
+        flex-direction: column;
+    }
+    .admin-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+}
+
+/* Member Management Page Styles */
+.member-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-bottom: 30px;
+}
+
+.member-table th, .member-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.member-table th {
+    background: #f5f6fa;
+    color: #2c3e50;
+}
+
+.member-table tr:hover {
+    background: #f9fafb;
+}
+
+.crud-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.edit-btn {
+    background: #f1c40f;
+    color: #fff;
+}
+
+.delete-btn {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.crud-form {
+    background: #fff;
+    padding: 18px 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+    margin-bottom: 24px;
+    max-width: 500px;
+}
+
+.crud-form label {
+    display: block;
+    margin-top: 10px;
+}
+
+.crud-form input, .crud-form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.crud-form .crud-btn {
+    margin-top: 12px;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(44, 62, 80, 0.3);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 24px rgba(44, 62, 80, 0.18);
+    padding: 32px 28px 24px 28px;
+    min-width: 320px;
+    max-width: 95vw;
+    position: relative;
+    z-index: 2100;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #888;
+    cursor: pointer;
+}
+
+/* Product Management Page Styles */
+.product-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-bottom: 30px;
+}
+
+.product-table th, .product-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.product-table th {
+    background: #f5f6fa;
+    color: #2c3e50;
+}
+
+.product-table tr:hover {
+    background: #f9fafb;
+}
+
+.product-img-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+.crud-form label {
+    display: block;
+    margin-top: 10px;
+}
+
+.crud-form input, .crud-form select, .crud-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.crud-form textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.crud-form .crud-btn {
+    margin-top: 12px;
+}
