@@ -21,3 +21,23 @@ function showAddForm() {
 function hideAddForm() {
     document.getElementById('addModal').classList.remove('active');
 }
+
+// Auto-submit form when filters change
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[method="GET"]');
+    const inputs = form.querySelectorAll('select, input[type="text"]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+
+    // For text input, submit on Enter key
+    const searchInput = form.querySelector('input[type="text"]');
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            form.submit();
+        }
+    });
+});
