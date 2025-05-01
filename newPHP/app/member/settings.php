@@ -16,6 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($result['error'])) $error = $result['error'];
     }
     
+    if (isset($_POST['update_address'])) {
+        $result = updateMemberAddress($_SESSION['member_id'], $_POST['address']);
+        if (isset($result['success'])) $success = $result['success'];
+        if (isset($result['error'])) $error = $result['error'];
+    }
+    
     if (isset($_POST['change_password'])) {
         $result = updateMemberPassword(
             $_SESSION['member_id'],
@@ -118,9 +124,9 @@ if (!$member) {
                 <form method="POST">
                     <div class="form-group">
                         <label class="form-label">Address</label>
-                        <textarea name="address" class="form-input" rows="4" required><?php echo htmlspecialchars($member['Address'] ?? ''); ?></textarea>
+                        <textarea name="address" class="form-input" rows="4" required><?php echo htmlspecialchars($member['address'] ?? ''); ?></textarea>
                     </div>
-                    <button type="submit" name="update_profile" class="btn">Update Address</button>
+                    <button type="submit" name="update_address" class="btn">Update Address</button>
                 </form>
             </div>
 

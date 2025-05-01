@@ -619,17 +619,28 @@ function updateMemberPhoto($memberId, $file) {
     return ["error" => "Invalid file upload"];
 }
 
+function updateMemberAddress($memberId, $address) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("UPDATE member SET address = ? WHERE MemberID = ?");
+        $stmt->execute([$address, $memberId]);
+        return ["success" => "Address updated successfully!"];
+    } catch (PDOException $e) {
+        error_log("Address Update Error: " . $e->getMessage());
+        return ["error" => "Error updating address"];
+    }
+}
+
 function updateMemberDetails($memberId, $data) {
     global $pdo;
     try {
-        $stmt = $pdo->prepare("UPDATE member SET Name=?, Email=?, PhoneNumber=?, Gender=?, DateOfBirth=?, Address=? WHERE MemberID=?");
+        $stmt = $pdo->prepare("UPDATE member SET Name=?, Email=?, PhoneNumber=?, Gender=?, DateOfBirth=? WHERE MemberID=?");
         $stmt->execute([
             $data['name'] ?? '',
             $data['email'] ?? '',
             $data['phone'] ?? '',
             $data['gender'] ?? '',
             $data['dob'] ?? '',
-            $data['address'] ?? '',
             $memberId
         ]);
         return ["success" => "Profile updated successfully!"];
