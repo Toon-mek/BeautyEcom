@@ -106,7 +106,6 @@ foreach ($categories as $category) {
 <div class="featured-products" id="featured">
     <div class="section-header">
         <h2>Featured Products</h2>
-        <p>One product from each category</p>
     </div>
     <div class="product-grid">
         <?php foreach ($featuredProducts as $product): ?>
