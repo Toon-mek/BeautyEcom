@@ -76,7 +76,7 @@ foreach ($categories as $category) {
         <h1>Discover Your Beauty Journey</h1>
         <p>Premium beauty and wellness products for your unique needs</p>
         <div class="hero-buttons">
-            <a href="product/all_product.php" class="btn btn-primary">Shop Now</a>
+            <a href="product/all_product.php" class="btn btn-outline">Shop Now</a>
             <a href="#featured" class="btn btn-outline">View Featured</a>
         </div>
     </div>

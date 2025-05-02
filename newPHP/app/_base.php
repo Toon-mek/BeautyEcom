@@ -441,20 +441,34 @@ function handleStaffLogin($pdo) {
         $username = $_POST['username'];
         $password = $_POST['password'];
 
+        // First check staff table
         $stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['Password'])) {
+        if (!$user) {
+            // If not found in staff table, check manager table
+            $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
+            $stmt->execute([$username]);
+            $user = $stmt->fetch();
+            
+            if ($user && password_verify($password, $user['Password'])) {
+                $_SESSION['staff_id'] = $user['ManagerUsername'];
+                $_SESSION['staff_name'] = $user['ManagerName'] ?? $user['ManagerUsername'];
+                $_SESSION['is_manager'] = true;
+                header("Location: ../admin/adminindex.php");
+                exit();
+            }
+        } else if ($user && password_verify($password, $user['Password'])) {
             if ($user['StaffStatus'] === 'Inactive') {
                 $_SESSION['staff_login_error'] = "Your account is inactive. Please contact admin.";
                 header("Location: staffLogin.php");
-
                 exit();
             }
 
             $_SESSION['staff_id'] = $user['StaffUsername'];
             $_SESSION['staff_name'] = $user['StaffName'] ?? $user['StaffUsername'];
+            $_SESSION['is_manager'] = false;
 
             if (!empty($user['FirstTimeLogin'])) {
                 header("Location: ../auth/staffSetup.php");
@@ -462,11 +476,11 @@ function handleStaffLogin($pdo) {
                 header("Location: ../admin/adminindex.php");
             }
             exit();
-        } else {
-            $_SESSION['staff_login_error'] = "Invalid username or password.";
-            header("Location: staffLogin.php");
-            exit();
         }
+        
+        $_SESSION['staff_login_error'] = "Invalid username or password.";
+        header("Location: staffLogin.php");
+        exit();
     }
 }
 
