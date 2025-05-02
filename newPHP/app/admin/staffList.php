@@ -32,6 +32,7 @@ $allowedDir  = ['asc', 'desc'];
 $sort         = $_GET['sort'] ?? 'CreatedAt';
 $dir          = $_GET['order'] ?? 'desc';
 $search       = $_GET['search'] ?? '';
+$statusFilter = $_GET['status_filter'] ?? '';
 $page         = max(1, (int) ($_GET['page'] ?? 1));
 $perPage      = 10;
 $offset       = ($page - 1) * $perPage;
@@ -55,6 +56,11 @@ if (!empty($search)) {
     $params[':search_name']  = "%$search%";
     $params[':search_username'] = "%$search%";
     $params[':search_email'] = "%$search%";
+}
+
+if (!empty($statusFilter)) {
+    $whereClauses[] = "StaffStatus = :status";
+    $params[':status'] = $statusFilter;
 }
 
 if ($whereClauses) {
@@ -156,20 +162,47 @@ if (isset($_POST['edit_staff'])) {
                 Add New Staff
             </button>
 
-            <form method="GET" style="margin-bottom: 20px;">
-                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>"
-                    placeholder="Search name, username or email" class="crud-select">
-                <select name="sort" class="crud-select">
-                    <option value="CreatedAt" <?php if ($sort === 'CreatedAt') echo 'selected'; ?>>Created At</option>
-                    <option value="StaffName" <?php if ($sort === 'StaffName') echo 'selected'; ?>>Name</option>
-                    <option value="StaffUsername" <?php if ($sort === 'StaffUsername') echo 'selected'; ?>>Username</option>
-                </select>
-                <select name="order" class="crud-select">
-                    <option value="desc" <?php if ($dir === 'desc') echo 'selected'; ?>>Descending</option>
-                    <option value="asc" <?php if ($dir === 'asc') echo 'selected'; ?>>Ascending</option>
-                </select>
-                <button type="submit" class="crud-btn" style="background:#3498db;color:white;">Apply</button>
-            </form>
+            <div class="filters-section" style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <form method="GET" class="filters-form" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: nowrap;">
+                    <div class="filter-group" style="flex: 2;">
+                        <label for="search" style="display: block; margin-bottom: 5px;">Search</label>
+                        <input type="text" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>"
+                            placeholder="Search name, username or email" class="crud-select" style="width: 100%;">
+                    </div>
+                    
+                    <div class="filter-group" style="flex: 1;">
+                        <label for="status_filter" style="display: block; margin-bottom: 5px;">Status</label>
+                        <select name="status_filter" id="status_filter" class="crud-select" style="width: 100%;">
+                            <option value="">All Status</option>
+                            <option value="Active" <?php if ($statusFilter === 'Active') echo 'selected'; ?>>Active</option>
+                            <option value="Inactive" <?php if ($statusFilter === 'Inactive') echo 'selected'; ?>>Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="flex: 1;">
+                        <label for="sort" style="display: block; margin-bottom: 5px;">Sort By</label>
+                        <select name="sort" id="sort" class="crud-select" style="width: 100%;">
+                            <option value="CreatedAt" <?php if ($sort === 'CreatedAt') echo 'selected'; ?>>Created At</option>
+                            <option value="StaffName" <?php if ($sort === 'StaffName') echo 'selected'; ?>>Name</option>
+                            <option value="StaffUsername" <?php if ($sort === 'StaffUsername') echo 'selected'; ?>>Username</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="flex: 1;">
+                        <label for="order" style="display: block; margin-bottom: 5px;">Order</label>
+                        <select name="order" id="order" class="crud-select" style="width: 100%;">
+                            <option value="desc" <?php if ($dir === 'desc') echo 'selected'; ?>>Descending</option>
+                            <option value="asc" <?php if ($dir === 'asc') echo 'selected'; ?>>Ascending</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="flex: 0 0 auto;">
+                        <button type="submit" class="crud-btn" style="background:#3498db; color:white; white-space: nowrap; padding: 0.75rem 0.5rem; margin-top: 0;">
+                            Apply Filters
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <?php if (isset($_GET['success'])): ?>
                 <div class="alert alert-success"><?php echo htmlspecialchars($_GET['success']); ?></div>

@@ -72,6 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+    <a href="../index.php" class="logo-link">
+        <img src="../backgroundimg/Logo.png" alt="Beauty & Wellness Logo">
+    </a>
     <div class="staff-login">
         <a href="staffLogin.php" class="staff-login-link">Staff Login</a>
     </div>

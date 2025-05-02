@@ -14,9 +14,12 @@ $error = handleStaffLogin($pdo);
 </head>
 
 <body>
-<div class="member-login">
-    <a href="login.php" class="member-login-link">Member Login</a>
-</div>
+    <a href="../index.php" class="logo-link">
+        <img src="../backgroundimg/Logo.png" alt="Beauty & Wellness Logo">
+    </a>
+    <div class="member-login">
+        <a href="login.php" class="member-login-link">Member Login</a>
+    </div>
     <div class="form-container">
         <button type="button" class="return-btn" onclick="window.history.back();">
             <i class="fa fa-chevron-left" aria-hidden="true"></i>

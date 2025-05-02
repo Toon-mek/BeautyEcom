@@ -2215,3 +2215,22 @@ body {
     transition: background 0.2s, color 0.2s;
     background: #fff;
 }
+
+.logo-link {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+.logo-link img {
+    width: 150px;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.logo-link img:hover {
+    transform: scale(1.05);
+}
