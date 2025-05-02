@@ -64,7 +64,8 @@ function redirectIfNotLoggedIn() {
 function requireLogin($role = 'member') {
     if ($role === 'staff') {
         if (!isset($_SESSION['staff_id'])) {
-            header("Location: /../auth/staffLogin.php");
+            header("Location: staffLogin.php");
+
             exit();
         }
     } elseif ($role === 'member') {
@@ -435,43 +436,38 @@ function requireAdminPage() {
     require_once __DIR__ . '/../_base.php';
     requireLogin('staff');
 }
-function handleStaffLogin()
-{
-    global $pdo;
-
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+function handleStaffLogin($pdo) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = $_POST['username'];
         $password = $_POST['password'];
 
-        // Check in staff table
         $stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
 
-        // If not found, check manager table
-        if (!$user) {
-            $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch();
-        }
-
         if ($user && password_verify($password, $user['Password'])) {
-            $_SESSION['staff_id'] = $username;
-            $_SESSION['staff_name'] = $user['StaffName'] ?? $user['ManagerName'] ?? $username;
-            
-            // Check if it's a first-time login for staff (not managers)
-            if (isset($user['FirstTimeLogin']) && $user['FirstTimeLogin'] == 1) {
-                header("Location: ../auth/staffSetup.php");
+            if ($user['StaffStatus'] === 'Inactive') {
+                $_SESSION['staff_login_error'] = "Your account is inactive. Please contact admin.";
+                header("Location: staffLogin.php");
+
                 exit();
             }
-            
-            header("Location: ../admin/adminindex.php");
+
+            $_SESSION['staff_id'] = $user['StaffUsername'];
+            $_SESSION['staff_name'] = $user['StaffName'] ?? $user['StaffUsername'];
+
+            if (!empty($user['FirstTimeLogin'])) {
+                header("Location: ../auth/staffSetup.php");
+            } else {
+                header("Location: ../admin/adminindex.php");
+            }
             exit();
         } else {
-            return "Invalid username or password";
+            $_SESSION['staff_login_error'] = "Invalid username or password.";
+            header("Location: staffLogin.php");
+            exit();
         }
     }
-    return null;
 }
 
 function isManager($staff_id)
