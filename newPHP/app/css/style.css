@@ -476,7 +476,7 @@ body {
 }
 
 .quantity-input {
-    width: 50px;
+    width: 140px;
     text-align: center;
     border: 1px solid #dee2e6;
     border-radius: 4px;
@@ -1271,7 +1271,6 @@ body {
     width: 100%;
     height: 400px;
     object-fit: contain;
-    background: #f8f9fa;
     border-radius: 8px;
     margin-bottom: 1.5rem;
 }
@@ -1291,7 +1290,6 @@ body {
     border-radius: 6px;
     cursor: pointer;
     background: #f8f9fa;
-    padding: 0.5rem;
     transition: all 0.3s ease;
 }
 
@@ -1665,7 +1663,6 @@ body {
 .product-image {
     position: relative;
     width: 100%;
-    padding-top: 100%; /* Creates a square aspect ratio */
     background: #f8f9fa;
     overflow: hidden;
 }
@@ -1677,8 +1674,6 @@ body {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 1rem;
-    transition: transform 0.3s ease;
 }
 
 .product-card:hover .product-image img {
