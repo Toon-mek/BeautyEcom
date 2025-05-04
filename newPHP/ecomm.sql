@@ -141,7 +141,7 @@ CREATE TABLE `member` (
 -- Dumping data for table `member`
 --
 
-INSERT INTO `member` (`MemberID`, `Name`, `Password`, `Email`, `PhoneNumber`, `ProfilePhoto`, `Gender`, `DateOfBirth`, `CreatedAt`, `MembershipStatus`, `LastLogin`, `address`) VALUES
+INSERT INTO `member` (`MemberID`, `Name`, `Password`, `Email`, `PhoneNumber`, `ProfilePhoto`, `Gender`, `DateOfBirth`, `CreatedAt`, `MembershipStatus`, `Last_login`, `address`) VALUES
 (1, 'heng', '$2y$10$OjkdrrPhSmHPQJUDFj8/HOJVZ6GYqWWtZ4f3eBWIgpheeQi3eyRLu', 'yikheng0613@gmail.com', '72983691', '68136c269b4e6_IMG20250428131320.jpg', 'Male', '2004-06-13', '2025-04-29 15:08:11', 'Active', NULL, 'fdbsahfhioashdiohasiodhioashdioahsiodhioashidohsihd'),
 (5, 'abc', '$2y$10$hByzvxy1Xs9JPnGr.jhoDu467GrSrD8tmfJPnIpSVlTaMM4OYknS6', 'abc@gmail.com', '123456789', NULL, NULL, NULL, '2025-05-01 16:35:34', 'Active', NULL, NULL),
 (6, 'gg', '$2y$10$4zJmQQiGEJ3YNTCzzbJOOOffhrYq/777bLt.Vc2XLZ3/zjxVcbHI.', 'gg123@gmail.com', '123456789', NULL, 'Female', '2025-05-10', '2025-05-01 17:03:29', 'Blocked', NULL, NULL);
