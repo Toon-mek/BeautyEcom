@@ -125,7 +125,7 @@ $payment = getPaymentDetails($pdo, $order_id, $payment_method);
         </div>
 
         <div class="continue-shopping-container">
-            <a href="/../product/product.php" class="btn btn-dark">Continue Shopping</a>
+            <a href="../product/product.php" class="btn btn-dark">Continue Shopping</a>
         </div>
     </div>
 </body>
