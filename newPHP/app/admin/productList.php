@@ -114,28 +114,40 @@ function buildSortLink($column, $label)
         <div class="admin-main-content">
             <h1>Product Management</h1>
 
-            <form method="GET" style="margin-bottom: 20px;">
-                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search products..." class="crud-select">
-                <select name="category_filter" class="crud-select">
-                    <option value="">All Categories</option>
-                    <?php foreach ($categories as $cat): ?>
-                        <option value="<?php echo $cat['CategoryID']; ?>"
-                            <?php echo ($categoryFilter == $cat['CategoryID']) ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($cat['CategoryName']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="sort">
-                    <option value="ProductID" <?php echo ($sort === 'ProductID') ? 'selected' : ''; ?>>ID</option>
-                    <option value="CategoryName" <?php echo ($sort === 'CategoryName') ? 'selected' : ''; ?>>Category</option>
-                    <option value="ProductName" <?php echo ($sort === 'ProductName') ? 'selected' : ''; ?>>Name</option>
-                    <option value="Price" <?php echo ($sort === 'Price') ? 'selected' : ''; ?>>Price</option>
-                    <option value="Quantity" <?php echo ($sort === 'Quantity') ? 'selected' : ''; ?>>Quantity</option>
-                </select>
-                <select name="order">
-                    <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
-                    <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
-                </select>
+            <form method="GET" style="margin-bottom: 20px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="search" style="margin-bottom: 5px;">Search</label>
+                    <input type="text" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search products..." class="crud-select">
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="category_filter" style="margin-bottom: 5px;">Category</label>
+                    <select name="category_filter" id="category_filter" class="crud-select">
+                        <option value="">All Categories</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo $cat['CategoryID']; ?>"
+                                <?php echo ($categoryFilter == $cat['CategoryID']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($cat['CategoryName']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="sort" style="margin-bottom: 5px;">Sort By</label>
+                    <select name="sort" id="sort" class="crud-select">
+                        <option value="ProductID" <?php echo ($sort === 'ProductID') ? 'selected' : ''; ?>>ID</option>
+                        <option value="CategoryName" <?php echo ($sort === 'CategoryName') ? 'selected' : ''; ?>>Category</option>
+                        <option value="ProductName" <?php echo ($sort === 'ProductName') ? 'selected' : ''; ?>>Name</option>
+                        <option value="Price" <?php echo ($sort === 'Price') ? 'selected' : ''; ?>>Price</option>
+                        <option value="Quantity" <?php echo ($sort === 'Quantity') ? 'selected' : ''; ?>>Quantity</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="order" style="margin-bottom: 5px;">Order</label>
+                    <select name="order" id="order" class="crud-select">
+                        <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
+                        <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
+                    </select>
+                </div>
             </form>
 
             <button class="crud-btn add-btn" onclick="showAddForm()" style="margin-bottom:18px;background:#27ae60;color:#fff;">Add Product</button>

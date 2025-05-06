@@ -894,4 +894,61 @@ function resetPasswordByToken($token, $newPassword) {
     return true;
 }
 
+// ------------------------------
+// 🎟️ Voucher Management (Admin)
+// ------------------------------
+function fetchAllVouchers($sort = 'CreatedAt', $order = 'desc')
+{
+    global $pdo;
+    $allowedSortFields = ['VoucherID', 'Code', 'Discount', 'ExpiryDate', 'Status', 'CreatedAt', 'UpdatedAt'];
+    $allowedOrder = ['asc', 'desc'];
+    if (!in_array($sort, $allowedSortFields)) $sort = 'CreatedAt';
+    if (!in_array(strtolower($order), $allowedOrder)) $order = 'desc';
+    $stmt = $pdo->prepare("SELECT * FROM voucher ORDER BY $sort $order");
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+function addVoucher($data)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("INSERT INTO voucher (Code, Discount, ExpiryDate, Description, Status) VALUES (?, ?, ?, ?, ?)");
+    return $stmt->execute([
+        $data['code'],
+        $data['discount'],
+        $data['expiry_date'],
+        $data['description'],
+        $data['status'] ?? 'Active'
+    ]);
+}
+
+function editVoucher($id, $data)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("UPDATE voucher SET Code=?, Discount=?, ExpiryDate=?, Description=?, Status=? WHERE VoucherID=?");
+    return $stmt->execute([
+        $data['code'],
+        $data['discount'],
+        $data['expiry_date'],
+        $data['description'],
+        $data['status'],
+        $id
+    ]);
+}
+
+function deleteVoucher($id)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("DELETE FROM voucher WHERE VoucherID = ?");
+    $stmt->execute([$id]);
+}
+
+function getVoucherById($id)
+{
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT * FROM voucher WHERE VoucherID = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
 ?>
