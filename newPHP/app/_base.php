@@ -324,39 +324,53 @@ function processCheckout($pdo, $selectedItems) {
         // Start transaction
         $pdo->beginTransaction();
 
+        // Handle both single item (string) and multiple items (array)
+        if (!is_array($selectedItems)) {
+            $selectedItems = [$selectedItems]; // Convert single ID to array
+        }
+        
         // Validate stock availability for all selected items
+        $placeholders = str_repeat('?,', count($selectedItems) - 1) . '?';
         $stmt = $pdo->prepare("
             SELECT ci.CartItemID, ci.ProductID, ci.Quantity as CartQuantity, 
-                   p.Quantity as StockQuantity, p.ProductName 
+                   p.Quantity as StockQuantity, p.ProductName, p.Price 
             FROM cartitem ci 
             JOIN product p ON ci.ProductID = p.ProductID 
-            WHERE ci.CartItemID IN (" . str_repeat('?,', count($selectedItems) - 1) . "?)
+            WHERE ci.CartItemID IN ($placeholders)
         ");
         $stmt->execute($selectedItems);
         $items = $stmt->fetchAll();
 
+        // Calculate order total
+        $orderTotal = 0;
         foreach ($items as $item) {
             if ($item['CartQuantity'] > $item['StockQuantity']) {
                 throw new Exception("Not enough stock for {$item['ProductName']}");
             }
+            $orderTotal += $item['Price'] * $item['CartQuantity'];
         }
 
-        // Create order
+        // Create order with total amount
         $stmt = $pdo->prepare("
-            INSERT INTO orders (MemberID, OrderDate, OrderStatus) 
-            VALUES (?, NOW(), 'Pending')
+            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount) 
+            VALUES (?, NOW(), 'Pending', ?)
         ");
-        $stmt->execute([$_SESSION['member_id']]);
+        $stmt->execute([$_SESSION['member_id'], $orderTotal]);
         $orderId = $pdo->lastInsertId();
 
         // Create order items and update stock
         foreach ($items as $item) {
             // Add to order items
             $stmt = $pdo->prepare("
-                INSERT INTO orderitem (OrderID, ProductID, Quantity) 
-                VALUES (?, ?, ?)
+                INSERT INTO orderitem (OrderID, ProductID, Quantity, OrderItemPrice) 
+                VALUES (?, ?, ?, ?)
             ");
-            $stmt->execute([$orderId, $item['ProductID'], $item['CartQuantity']]);
+            $stmt->execute([
+                $orderId, 
+                $item['ProductID'], 
+                $item['CartQuantity'],
+                $item['Price']
+            ]);
 
             // Update stock
             $stmt = $pdo->prepare("
@@ -375,13 +389,15 @@ function processCheckout($pdo, $selectedItems) {
         $pdo->commit();
 
         // Redirect to order confirmation
-        header("Location: ../order/confirmation.php?order_id=" . $orderId);
+        header("Location: ../order/order_confirmation.php?order_id=" . $orderId);
         exit();
 
     } catch (Exception $e) {
         // Rollback transaction on error
         $pdo->rollBack();
         $_SESSION['error'] = $e->getMessage();
+        header("Location: ../cart.php");
+        exit();
     }
 }
 
@@ -695,7 +711,7 @@ function redirectIfInvalidOrder($pdo, $order_id) {
     }
 
     $stmt = $pdo->prepare("SELECT o.*, m.Name, m.Email, m.PhoneNumber 
-                        FROM `order` o 
+                        FROM `orders` o 
                         JOIN member m ON o.MemberID = m.MemberID 
                         WHERE o.OrderID = ? AND o.MemberID = ?");
     $stmt->execute([$order_id, $_SESSION['member_id']]);
@@ -710,7 +726,7 @@ function redirectIfInvalidOrder($pdo, $order_id) {
 }
 
 function getOrderItems($pdo, $order_id) {
-    $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1 
+    $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1, p.Price 
                         FROM orderitem oi 
                         JOIN product p ON oi.ProductID = p.ProductID 
                         WHERE oi.OrderID = ?");
@@ -718,7 +734,94 @@ function getOrderItems($pdo, $order_id) {
     return $stmt->fetchAll();
 }
 
-function getPaymentDetails($pdo, $order_id) {
+// ------------------------------
+// 💰 Payment Processing
+// ------------------------------
+function createOrderPayment($order_id, $payment_method) 
+{
+    global $pdo;
+    
+    try {
+        // Check if payment already exists for this order
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM payment WHERE OrderID = ?");
+        $checkStmt->execute([$order_id]);
+        $paymentExists = $checkStmt->fetchColumn() > 0;
+        
+        if (!$paymentExists) {
+            // Get order total amount
+            $orderStmt = $pdo->prepare("SELECT OrderTotalAmount FROM orders WHERE OrderID = ?");
+            $orderStmt->execute([$order_id]);
+            $orderTotal = $orderStmt->fetchColumn();
+            
+            // If OrderTotalAmount is not set, calculate it from order items
+            if (!$orderTotal) {
+                $itemsStmt = $pdo->prepare("
+                    SELECT oi.*, p.Price 
+                    FROM orderitem oi 
+                    JOIN product p ON oi.ProductID = p.ProductID 
+                    WHERE oi.OrderID = ?
+                ");
+                $itemsStmt->execute([$order_id]);
+                $items = $itemsStmt->fetchAll();
+                
+                if (empty($items)) {
+                    throw new Exception("Order not found or has no items");
+                }
+                
+                $orderTotal = 0;
+                foreach ($items as $item) {
+                    // Get price and quantity, handling different possible column names
+                    $price = isset($item['OrderItemPrice']) ? $item['OrderItemPrice'] : $item['Price'];
+                    $quantity = isset($item['Quantity']) ? $item['Quantity'] : 
+                               (isset($item['OrderItemQTY']) ? $item['OrderItemQTY'] : 1);
+                    $orderTotal += $price * $quantity;
+                }
+                
+                // Update the order total in the database
+                $updateStmt = $pdo->prepare("UPDATE orders SET OrderTotalAmount = ? WHERE OrderID = ?");
+                $updateStmt->execute([$orderTotal, $order_id]);
+            }
+            
+            // Create payment record
+            $stmt = $pdo->prepare("INSERT INTO payment (OrderID, PaymentDate, PaymentMethod, AmountPaid, PaymentStatus) 
+                                  VALUES (?, NOW(), ?, ?, 'Paid')");
+            $stmt->execute([$order_id, $payment_method, $orderTotal]);
+            
+            return $pdo->lastInsertId();
+        }
+        
+        return true; // Payment already exists
+    } catch (PDOException $e) {
+        error_log("Create Payment Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+function getPaymentDetails($pdo, $order_id, $explicit_payment_method = null) {
+    // Use explicit method if provided, otherwise fallback to POST/session
+    $payment_method = $explicit_payment_method;
+    
+    if (empty($payment_method)) {
+        $payment_method = $_POST['payment_method'] ?? $_SESSION['last_payment_method'] ?? 'Bank Transfer';
+    }
+    
+    // Check if payment record already exists
+    $checkStmt = $pdo->prepare("SELECT * FROM payment WHERE OrderID = ?");
+    $checkStmt->execute([$order_id]);
+    $existingPayment = $checkStmt->fetch();
+    
+    if ($existingPayment) {
+        // Always update with the explicit payment method if provided
+        if (!empty($payment_method) && $payment_method != 'Bank Transfer') {
+            $updateStmt = $pdo->prepare("UPDATE payment SET PaymentMethod = ? WHERE OrderID = ?");
+            $updateStmt->execute([$payment_method, $order_id]);
+        }
+    } else {
+        // Create payment if it doesn't exist
+        createOrderPayment($order_id, $payment_method);
+    }
+    
+    // Return updated payment details
     $stmt = $pdo->prepare("SELECT * FROM payment WHERE OrderID = ?");
     $stmt->execute([$order_id]);
     return $stmt->fetch();
@@ -893,5 +996,4 @@ function resetPasswordByToken($token, $newPassword) {
 
     return true;
 }
-
 ?>
