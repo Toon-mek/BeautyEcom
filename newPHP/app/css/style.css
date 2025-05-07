@@ -2973,3 +2973,74 @@ body {
 .action-btn.secondary:hover {
     background-color: #5a6268;
 }
+
+/* Cancel Order Modal */
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+.cancel-order-btn {
+    background-color: #343a40;
+    border-color: #343a40;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+.cancel-order-btn:hover {
+    background-color: #c82333;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+}
+.modal-buttons {
+    margin-top: 20px;
+    text-align: right;
+}
+.modal-buttons button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.confirm-cancel {
+    background-color: #dc3545;
+    color: white;
+}
+.close-modal {
+    background-color: #6c757d;
+    color: white;
+}

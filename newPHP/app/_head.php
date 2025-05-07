@@ -32,9 +32,11 @@ if (!file_exists($uploadsDir)) {
                             $profilePhoto = getMemberProfilePhoto($_SESSION['member_id']);
                             $photoPath = "/newPHP/app/uploads/" . htmlspecialchars($profilePhoto);
                             $defaultPhoto = "/newPHP/app/uploads/default-profile.png";
+                            $photoPath = "/uploads/" . htmlspecialchars($profilePhoto);
+                            $defaultPhoto = "/uploads/default-profile.png";
                             
-                            // Check if file exists, if not use default
-                            if (!file_exists(__DIR__ . '/uploads/' . $profilePhoto)) {
+                            // Fix the path check - remove the '/uploads' part since it's already in __DIR__
+                            if (!empty($profilePhoto) && !file_exists(__DIR__ . '/uploads/' . $profilePhoto)) {
                                 $photoPath = $defaultPhoto;
                             }
                             ?>
