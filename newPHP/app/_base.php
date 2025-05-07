@@ -13,7 +13,7 @@ function registerUser($name, $email, $password, $phone, $gender, $dob)
     global $pdo;
     try {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $defaultPhoto = 'defaultprofilephoto.jpg';
+        $defaultPhoto = "/newPHP/app/uploads/defaultprofilephoto.jpg";
         $stmt = $pdo->prepare("INSERT INTO member (Name, Email, Password, PhoneNumber, Gender, DateOfBirth, ProfilePhoto) VALUES (?, ?, ?, ?, ?, ?, ?)");
         return $stmt->execute([$name, $email, $hashedPassword, $phone, $gender, $dob, $defaultPhoto]);
     } catch (PDOException $e) {
@@ -45,6 +45,19 @@ function loginUser($email, $password)
 function isLoggedIn()
 {
     return isset($_SESSION['member_id']);
+}
+
+function getMemberProfilePhoto($memberId) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        $result = $stmt->fetch();
+        return $result && $result['ProfilePhoto'] ? $result['ProfilePhoto'] : 'defaultprofilephoto.jpg';
+    } catch (PDOException $e) {
+        error_log("Error getting member profile photo: " . $e->getMessage());
+        return 'default-profile.png';
+    }
 }
 
 function logoutUser() {
@@ -320,6 +333,7 @@ function updateCartItemQuantity($pdo, $cartItemId, $quantity) {
 }
 
 function processCheckout($pdo, $selectedItems) {
+    error_log('Selected items: ' . print_r($selectedItems, true));
     try {
         // Start transaction
         $pdo->beginTransaction();
@@ -328,7 +342,10 @@ function processCheckout($pdo, $selectedItems) {
         if (!is_array($selectedItems)) {
             $selectedItems = [$selectedItems]; // Convert single ID to array
         }
-        
+
+        // Get shipping fee from POST if available
+        $shippingFee = isset($_POST['shipping_fee']) ? floatval($_POST['shipping_fee']) : 0;
+
         // Validate stock availability for all selected items
         $placeholders = str_repeat('?,', count($selectedItems) - 1) . '?';
         $stmt = $pdo->prepare("
@@ -349,13 +366,14 @@ function processCheckout($pdo, $selectedItems) {
             }
             $orderTotal += $item['Price'] * $item['CartQuantity'];
         }
+        $orderTotal += $shippingFee;
 
-        // Create order with total amount
+        // Create order with total amount and shipping fee
         $stmt = $pdo->prepare("
-            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount) 
-            VALUES (?, NOW(), 'Pending', ?)
+            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount, ShippingFee) 
+            VALUES (?, NOW(), 'Pending', ?, ?)
         ");
-        $stmt->execute([$_SESSION['member_id'], $orderTotal]);
+        $stmt->execute([$_SESSION['member_id'], $orderTotal, $shippingFee]);
         $orderId = $pdo->lastInsertId();
 
         // Create order items and update stock
@@ -396,7 +414,7 @@ function processCheckout($pdo, $selectedItems) {
         // Rollback transaction on error
         $pdo->rollBack();
         $_SESSION['error'] = $e->getMessage();
-        header("Location: ../cart.php");
+        header("Location: ../order/cart.php");
         exit();
     }
 }
@@ -525,16 +543,25 @@ function getTotalProducts()
     return $pdo->query("SELECT COUNT(*) FROM product")->fetchColumn();
 }
 
-function getPendingOrders()
-{
-    global $pdo;
-    return $pdo->query("SELECT COUNT(*) FROM `order` WHERE OrderStatus = 'Pending'")->fetchColumn();
+function getPendingOrders($pdo) {
+    $query = "SELECT o.OrderID, o.OrderDate, o.OrderTotalAmount, m.Name as CustomerName, 
+              COUNT(oi.OrderItemID) as ItemCount
+              FROM orders o 
+              JOIN member m ON o.MemberID = m.MemberID
+              LEFT JOIN orderitem oi ON o.OrderID = oi.OrderID
+              WHERE o.OrderStatus = 'Pending'
+              GROUP BY o.OrderID
+              ORDER BY o.OrderDate DESC
+              LIMIT 5";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute();
+    return $stmt->fetchAll();
 }
 
-function getTotalSales()
+function getTotalSales($pdo)
 {
-    global $pdo;
-    return $pdo->query("SELECT SUM(OrderTotalAmount) FROM `order` WHERE OrderStatus = 'Completed'")->fetchColumn();
+    $result = $pdo->query("SELECT COALESCE(SUM(AmountPaid), 0) FROM payment WHERE PaymentStatus = 'Paid'")->fetchColumn();
+    return $result;
 }
 
 // ------------------------------
@@ -726,7 +753,7 @@ function redirectIfInvalidOrder($pdo, $order_id) {
 }
 
 function getOrderItems($pdo, $order_id) {
-    $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1, p.Price 
+    $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1, oi.OrderItemPrice as Price 
                         FROM orderitem oi 
                         JOIN product p ON oi.ProductID = p.ProductID 
                         WHERE oi.OrderID = ?");
@@ -1043,20 +1070,69 @@ function getVoucherById($id)
     return $stmt->fetch();
 }
 
-// ------------------------------
-// 👤 Member Profile Photo
-// ------------------------------
-function getMemberProfilePhoto($memberId) {
-    global $pdo;
+// Order Management Functions
+function updateOrderStatus($pdo, $orderId, $newStatus) {
+    // Validate status
+    $validStatuses = ['Pending', 'Completed', 'Cancelled'];
+    if (!in_array($newStatus, $validStatuses)) {
+        return false;
+    }
+    
     try {
-        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
-        $stmt->execute([$memberId]);
-        $photo = $stmt->fetchColumn();
-        return !empty($photo) ? $photo : 'default-profile.png';
+        $stmt = $pdo->prepare("UPDATE orders SET OrderStatus = ? WHERE OrderID = ?");
+        $stmt->execute([$newStatus, $orderId]);
+        return true;
     } catch (PDOException $e) {
-        error_log("Get Profile Photo Error: " . $e->getMessage());
-        return 'default-profile.png';
+        error_log("Error updating order status: " . $e->getMessage());
+        return false;
     }
 }
 
+function getOrders($pdo, $where = '', $params = [], $sort = 'OrderID', $dir = 'desc', $limit = 10, $offset = 0) {
+    $query = "SELECT o.*, m.Name as CustomerName 
+              FROM orders o 
+              LEFT JOIN member m ON o.MemberID = m.MemberID 
+              $where 
+              ORDER BY $sort $dir 
+              LIMIT :limit OFFSET :offset";
+    
+    $stmt = $pdo->prepare($query);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+    
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+function getOrderDetails($pdo, $orderId) {
+    $orderQuery = "SELECT o.*, m.Name as CustomerName, m.Email, m.PhoneNumber as Phone, m.Address
+                   FROM orders o
+                   LEFT JOIN member m ON o.MemberID = m.MemberID
+                   WHERE o.OrderID = ?";
+    $orderStmt = $pdo->prepare($orderQuery);
+    $orderStmt->execute([$orderId]);
+    return $orderStmt->fetch();
+}
+
+function countOrders($pdo, $where = '', $params = []) {
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM orders o 
+                               LEFT JOIN member m ON o.MemberID = m.MemberID 
+                               $where");
+    $countStmt->execute($params);
+    return $countStmt->fetchColumn();
+}
+
+function buildOrderSortLink($column, $label) {
+    $currentSort = $_GET['sort'] ?? 'OrderID';
+    $currentDir = $_GET['order'] ?? 'desc';
+    $nextDir = ($currentSort === $column && $currentDir === 'asc') ? 'desc' : 'asc';
+    $arrow = ($currentSort === $column) ? ($currentDir === 'asc' ? '↑' : '↓') : '';
+    return "<a href='?sort=$column&order=$nextDir'>" . htmlspecialchars($label) . " $arrow</a>";
+}
+
 ?>
+    
