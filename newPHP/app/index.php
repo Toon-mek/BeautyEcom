@@ -495,7 +495,6 @@ function processUserQuery($message, $conn) {
                "🏷️ Show category products\n" .
                "💰 Check product prices\n\n" .
                "What would you like to know about?";
-
     } catch (Exception $e) {
         error_log("Error in processUserQuery: " . $e->getMessage());
         throw $e; // Re-throw the exception to be caught by the main handler

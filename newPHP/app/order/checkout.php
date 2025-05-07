@@ -156,13 +156,9 @@ handleCartActions($pdo);
                         
                         <!-- If selected_items is passed, include them in the form -->
                         <?php if (isset($_POST['selected_items'])): ?>
-                            <?php if (!is_array($_POST['selected_items'])): ?>
-                                <input type="hidden" name="selected_items" value="<?php echo htmlspecialchars($_POST['selected_items']); ?>">
-                            <?php else: ?>
-                                <?php foreach ($_POST['selected_items'] as $item): ?>
-                                    <input type="hidden" name="selected_items[]" value="<?php echo htmlspecialchars($item); ?>">
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                            <?php foreach ((array)$_POST['selected_items'] as $item): ?>
+                                <input type="hidden" name="selected_items[]" value="<?php echo htmlspecialchars($item); ?>">
+                            <?php endforeach; ?>
                         <?php endif; ?>
                         
                         <button type="submit" name="checkout" class="btn-checkout">

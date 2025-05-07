@@ -13,7 +13,7 @@ function registerUser($name, $email, $password, $phone, $gender, $dob)
     global $pdo;
     try {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $defaultPhoto = 'defaultprofilephoto.jpg';
+        $defaultPhoto = "/newPHP/app/uploads/defaultprofilephoto.jpg";
         $stmt = $pdo->prepare("INSERT INTO member (Name, Email, Password, PhoneNumber, Gender, DateOfBirth, ProfilePhoto) VALUES (?, ?, ?, ?, ?, ?, ?)");
         return $stmt->execute([$name, $email, $hashedPassword, $phone, $gender, $dob, $defaultPhoto]);
     } catch (PDOException $e) {
@@ -45,6 +45,19 @@ function loginUser($email, $password)
 function isLoggedIn()
 {
     return isset($_SESSION['member_id']);
+}
+
+function getMemberProfilePhoto($memberId) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        $result = $stmt->fetch();
+        return $result && $result['ProfilePhoto'] ? $result['ProfilePhoto'] : 'defaultprofilephoto.jpg';
+    } catch (PDOException $e) {
+        error_log("Error getting member profile photo: " . $e->getMessage());
+        return 'default-profile.png';
+    }
 }
 
 function logoutUser() {
@@ -320,6 +333,7 @@ function updateCartItemQuantity($pdo, $cartItemId, $quantity) {
 }
 
 function processCheckout($pdo, $selectedItems) {
+    error_log('Selected items: ' . print_r($selectedItems, true));
     try {
         // Start transaction
         $pdo->beginTransaction();
@@ -328,7 +342,10 @@ function processCheckout($pdo, $selectedItems) {
         if (!is_array($selectedItems)) {
             $selectedItems = [$selectedItems]; // Convert single ID to array
         }
-        
+
+        // Get shipping fee from POST if available
+        $shippingFee = isset($_POST['shipping_fee']) ? floatval($_POST['shipping_fee']) : 0;
+
         // Validate stock availability for all selected items
         $placeholders = str_repeat('?,', count($selectedItems) - 1) . '?';
         $stmt = $pdo->prepare("
@@ -349,13 +366,14 @@ function processCheckout($pdo, $selectedItems) {
             }
             $orderTotal += $item['Price'] * $item['CartQuantity'];
         }
+        $orderTotal += $shippingFee;
 
-        // Create order with total amount
+        // Create order with total amount and shipping fee
         $stmt = $pdo->prepare("
-            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount) 
-            VALUES (?, NOW(), 'Pending', ?)
+            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount, ShippingFee) 
+            VALUES (?, NOW(), 'Pending', ?, ?)
         ");
-        $stmt->execute([$_SESSION['member_id'], $orderTotal]);
+        $stmt->execute([$_SESSION['member_id'], $orderTotal, $shippingFee]);
         $orderId = $pdo->lastInsertId();
 
         // Create order items and update stock
@@ -396,7 +414,7 @@ function processCheckout($pdo, $selectedItems) {
         // Rollback transaction on error
         $pdo->rollBack();
         $_SESSION['error'] = $e->getMessage();
-        header("Location: ../cart.php");
+        header("Location: ../order/cart.php");
         exit();
     }
 }
@@ -1044,3 +1062,4 @@ function getVoucherById($id)
 }
 
 ?>
+    
