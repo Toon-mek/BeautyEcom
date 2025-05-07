@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get current member details
 $member = getMemberDetails($_SESSION['member_id']);
 if (!$member) {
-    header("Location: /newPHP/app/auth/logout.php");
+    header("Location: ../auth/logout.php");
     exit();
 }
 ?>
@@ -68,7 +68,7 @@ if (!$member) {
             <div class="settings-section">
                 <h2 class="settings-title">Profile Photo</h2>
                 <div class="profile-photo-container">
-                    <img src="/newPHP/app/uploads/<?php echo htmlspecialchars($member['ProfilePhoto'] ?: 'default-profile.png'); ?>" 
+                    <img src="../uploads/<?php echo htmlspecialchars($member['ProfilePhoto'] ?: 'defaultprofilephoto.jpg'); ?>" 
                          alt="Current Profile Photo" 
                          class="current-photo">
                     <form method="POST" enctype="multipart/form-data">

@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
             <form method="POST" action="" class="add-to-cart-form">
                 <div class="quantity-input">
                     <button type="button" class="quantity-btn" onclick="decrementQuantity()">-</button>
-                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="<?php echo $product['Quantity']; ?>">
+                    <input type="number" id="quantity" name="quantity" class="quantity-input-cart" value="1" min="1" max="<?php echo $product['Quantity']; ?>">
                     <button type="button" class="quantity-btn" onclick="incrementQuantity()">+</button>
                 </div>
                 <div class="stock-info">Available Stock: <?php echo $product['Quantity']; ?></div>

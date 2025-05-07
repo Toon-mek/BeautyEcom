@@ -32,16 +32,19 @@ $isManager = isManager($_SESSION['staff_id']);
             <a href="orderList.php"><span>Order Management</span></a>
         </li>
         <?php if ($isManager): ?>
-        <li class="admin-manager-only">
-            <a href="salesReport.php"><span>Sales Reports</span></a>
-        </li>
-        <li class="admin-manager-only">
-            <a href="inventoryReport.php"><span>Inventory Reports</span></a>
-        </li>
-        <li class="admin-manager-only">
-            <a href="staffList.php"><span>Staff Management</span></a>
-        </li>
+            <li class="admin-manager-only">
+                <a href="salesReport.php"><span>Sales Reports</span></a>
+            </li>
+            <li class="admin-manager-only">
+                <a href="inventoryReport.php"><span>Inventory Reports</span></a>
+            </li>
+            <li class="admin-manager-only">
+                <a href="staffList.php"><span>Staff Management</span></a>
+            </li>
+            <li class="admin-manager-only">
+                <a href="voucherCRUD.php">Voucher Management</a>
+            </li>
         <?php endif; ?>
-        <li><a href="adminProfile.php">Profile</a></li>
+        <li><a href="adminProfile.php">Settings</a></li>
     </ul>
 </div>

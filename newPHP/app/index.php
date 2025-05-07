@@ -45,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <?php
-
 require_once __DIR__ . '/_base.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/_head.php';
@@ -70,13 +69,12 @@ foreach ($categories as $category) {
     }
 }
 ?>
-
 <div class="hero-section">
     <div class="hero-content">
         <h1>Discover Your Beauty Journey</h1>
         <p>Premium beauty and wellness products for your unique needs</p>
         <div class="hero-buttons">
-            <a href="product/all_product.php" class="btn btn-primary">Shop Now</a>
+            <a href="product/all_product.php" class="btn btn-outline">Shop Now</a>
             <a href="#featured" class="btn btn-outline">View Featured</a>
         </div>
     </div>
@@ -106,7 +104,6 @@ foreach ($categories as $category) {
 <div class="featured-products" id="featured">
     <div class="section-header">
         <h2>Featured Products</h2>
-        <p>Our most popular and highly-rated items</p>
     </div>
     <div class="product-grid">
         <?php foreach ($featuredProducts as $product): ?>
@@ -132,152 +129,23 @@ foreach ($categories as $category) {
     </div>
 </div>
 
-<!-- Chatbot Popup -->
-<div id="chat-popup" style="position: fixed; bottom: 80px; right: 20px; width: 400px; background: #fff; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); display: none; z-index: 1000;">
-    <div style="padding: 10px; background: #f4f4f4; border-bottom: 1px solid #ccc;">
+<div id="chat-popup" style="position: fixed; bottom: 80px; right: 20px; width: 350px; max-height: 500px; display: none; flex-direction: column; background: #fff; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 9999;">
+    <div style="padding: 10px; background: #f4f4f4; border-bottom: 1px solid #ccc; border-top-left-radius: 10px; border-top-right-radius: 10px;">
         <strong>Chatbot Steve</strong>
         <div style="float: right;">
             <button onclick="toggleChat()" style="background: none; border: none; font-size: 16px; cursor: pointer;">&times;</button>
         </div>
     </div>
-    <div id="chatbox" class="chatbox">
+    <div id="chatbox" style="flex: 1; height: 350px; overflow-y: auto; padding: 15px; background: #f9f9f9;">
     </div>
-    <div style="padding: 10px; border-top: 1px solid #ccc;">
-        <input type="text" id="userInput" placeholder="Type a message..." style="width: 80%; padding: 5px;">
-        <button onclick="sendMessage()" style="padding: 5px;">Send</button>
+    <div style="padding: 10px; border-top: 1px solid #ddd; background: #fff; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+        <input type="text" id="userInput" placeholder="Type a message..." style="width: 80%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <button onclick="sendMessage()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Send</button>
     </div>
 </div>
 <button onclick="toggleChat()" style="position: fixed; bottom: 20px; right: 20px; background: #007bff; color: #fff; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer; z-index: 1000;">💬</button>
 
-<script>
-    function toggleChat() {
-        const chatPopup = document.getElementById('chat-popup');
-        const isHidden = chatPopup.style.display === 'none' || chatPopup.style.display === '';
-        chatPopup.style.display = isHidden ? 'block' : 'none';
-        
-        // Show welcome message when chat is opened
-        if (isHidden) {
-            const chatbox = document.getElementById('chatbox');
-            fetch(window.location.href, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'message=help'
-            })
-            .then(async res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                const text = await res.text();
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    console.error('Server response:', text);
-                    throw new Error('Invalid JSON response');
-                }
-            })
-            .then(data => {
-                if (data && data.reply) {
-                    chatbox.innerHTML = `
-                        <div class="bot-message" style="margin: 10px 0; padding: 8px; border-radius: 8px; background-color: #e3f2fd;">
-                            <strong>Steve:</strong> ${data.reply.replace(/\n/g, '<br>')}
-                        </div>
-                    `;
-                }
-                chatbox.scrollTop = chatbox.scrollHeight;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                chatbox.innerHTML = `<div class="bot-message" style="margin: 10px 0; padding: 8px; border-radius: 8px; background-color: #e3f2fd;"><strong>Steve:</strong> How can I help you today?</div>`;
-            });
-        }
-    }
-
-    // Add event listener when the page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        const input = document.getElementById('userInput');
-        
-        // Add keypress event listener for Enter key
-        input.addEventListener('keypress', function(event) {
-            // Check if the pressed key is Enter
-            if (event.key === 'Enter') {
-                // Prevent default form submission
-                event.preventDefault();
-                // Trigger the send message function
-                sendMessage();
-            }
-        });
-    });
-    function toggleExpand() {
-    const chatbox = document.getElementById('chatbox');
-    if (chatbox.classList.contains('chatbox-expanded')) {
-        chatbox.classList.remove('chatbox-expanded');
-        chatbox.classList.add('chatbox-collapsed');
-    } else {
-        chatbox.classList.remove('chatbox-collapsed');
-        chatbox.classList.add('chatbox-expanded');
-    }
-    // Scroll to bottom after transition
-    setTimeout(() => {
-        chatbox.scrollTop = chatbox.scrollHeight;
-    }, 300);
-    }
-    
-    function sendMessage() {
-        const input = document.getElementById('userInput');
-        const message = input.value;
-        if (!message.trim()) return;
-
-        const chatbox = document.getElementById('chatbox');
-        input.value = '';
-
-        fetch(window.location.href, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: 'message=' + encodeURIComponent(message)
-        })
-        .then(async res => {
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            const text = await res.text();
-            try {
-                return JSON.parse(text);
-            } catch (e) {
-                console.error('Server response:', text);
-                throw new Error('Invalid JSON response');
-            }
-        })
-        .then(data => {
-            console.log('Server response:', data);
-            if (data && data.reply) {
-                let formattedReply = data.reply
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n/g, '<br>');
-                chatbox.innerHTML += `
-                    <div class="user-message" style="margin: 10px 0; padding: 8px; border-radius: 8px; background-color: #f0f0f0;">
-                        <strong>You:</strong> ${message}
-                    </div>
-                    <div class="bot-message" style="margin: 10px 0; padding: 8px; border-radius: 8px; background-color: #e3f2fd;">
-                        <strong>Steve:</strong> ${formattedReply}
-                    </div>
-                `;
-            } else {
-                throw new Error('Invalid response format');
-            }
-            chatbox.scrollTop = chatbox.scrollHeight;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            chatbox.innerHTML += `<div class="bot"><strong>Steve:</strong> Sorry, there was an error processing your request. (${error.message})</div>`;
-            chatbox.scrollTop = chatbox.scrollHeight;
-        });
-    }
-</script>
-
+<script src="js/index.js"></script>
 <?php
 function processUserQuery($message, $conn) {
     try {
@@ -634,5 +502,4 @@ function processUserQuery($message, $conn) {
     }
 }
 ?>
-
 <?php require_once __DIR__ . '/_foot.php'; ?>

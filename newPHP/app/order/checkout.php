@@ -1,225 +1,322 @@
 <?php
 require_once __DIR__ . '/../_base.php';
-
 // Redirect if not logged in
 redirectIfNotLoggedIn();
-
 // Get cart items
-$cart_items = getCartItems($pdo);
-
+$cart_items = getCartItems(pdo: $pdo);
 // Redirect if cart is empty
 redirectIfCartIsEmpty($cart_items);
-
 // Calculate total
 $total = calculateCartTotal($cart_items);
+// Handle checkout
+// $error = processCheckout($pdo, $cart_items, $total);
+$error = null;
 
-// Set default shipping fee
-$shipping_fee = 5.00;  // Default shipping fee
+handleCartActions($pdo);
 
-// Check if the user has selected a state and set shipping fee accordingly
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['state'])) {
-    $state = $_POST['state'];
-    
-    // Check if order total exceeds RM200 for free shipping
-    if ($total > 200) {
-        $shipping_fee = 0;  // Free shipping for orders over RM200
-    } else {
-        // Set shipping fee based on state
-        if (in_array($state, ['Sabah', 'Sarawak', 'Labuan'])) {
-            $shipping_fee = 10.00;  // RM10 shipping for Sabah, Sarawak, and Labuan
-        } else {
-            $shipping_fee = 5.00;  // RM5 shipping for other states
-        }
-    }
-}
-
-// Calculate total with shipping fee
-$total_with_shipping = $total + $shipping_fee;
-
-// Handle checkout process (using existing processCheckout function)
-$error = processCheckout($pdo, $cart_items, $total_with_shipping);
-
-// Handle receipt image upload (if applicable)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
-    $receipt_image = $_FILES['receipt_image'];
-    $upload_dir = '../uploads/receipts/';
-    $upload_file = $upload_dir . basename($receipt_image['name']);
-    
-    // Validate image file (add other validation if needed)
-    if (move_uploaded_file($receipt_image['tmp_name'], $upload_file)) {
-        // Process the uploaded file (e.g., store the path in the database)
-        $receipt_path = $upload_file;
-    } else {
-        $error = 'Failed to upload receipt image.';
-    }
-}
-
-// After successful checkout, redirect to order confirmation page
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$error) {
-    // Retrieve the order ID (assuming it's generated in the checkout process)
-    $order_id = $pdo->lastInsertId(); // Assuming the last inserted ID is the order ID
-
-    // Redirect to the order confirmation page with the order ID
-    header("Location: /newPHP/app/order/confirmation_order.php?order_id=" . $order_id);
-    exit();
-}
 ?>
 
+<?php require_once __DIR__ . '/../_head.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Beauty & Wellness</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-    <?php require_once __DIR__ . '/../_head.php'; ?> <!-- Existing Header -->
-
-    <div class="container py-5">
-        <div class="row">
-            <!-- Left Column: Checkout Form -->
-            <div class="col-md-8">
-                <h2 class="mb-4">Checkout</h2>
-                <?php if (isset($error)): ?>
-                    <div class="alert alert-danger"><?php echo $error; ?></div>
-                <?php endif; ?>
-
-                <form method="POST" action="" enctype="multipart/form-data">
-                    <!-- Shipping Address -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">Shipping Address</h5>
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
+    <div class="checkout-container">
+        <h1>Checkout</h1>
+        
+        <?php if(isset($error)): ?>
+            <div class="alert alert-danger"><?php echo $error; ?></div>
+        <?php endif; ?>
+        
+        <form method="POST" action="order_confirmation.php" enctype="multipart/form-data">
+            <div class="checkout-grid">
+                <div class="checkout-details">
+                    <!-- Shipping Information Section -->
+                    <div class="checkout-section">
+                        <h2 class="section-title">Shipping Information</h2>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="fullname">Full Name</label>
+                            <input class="form-input" type="text" name="fullname" id="fullname" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="address">Address</label>
+                            <input class="form-input" type="text" name="address" id="address" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="city">City</label>
+                            <input class="form-input" type="text" name="city" id="city" required>
+                        </div>
+                        
+                        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label class="form-label" for="postcode">Postcode</label>
+                                <input class="form-input" type="text" name="postcode" id="postcode" pattern="[0-9]{5}" title="Five digit postcode" required>
                             </div>
-                            <div class="mb-3">
-                                <label for="address" class="form-label">Address</label>
-                                <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="city" class="form-label">City</label>
-                                <input type="text" class="form-control" id="city" name="city" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="zip" class="form-label">Zip Code</label>
-                                <input type="text" class="form-control" id="zip" name="zip" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="state" class="form-label">State</label>
-                                <select class="form-select" id="state" name="state" required>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="state">State</label>
+                                <select class="form-input" name="state" id="state" required>
                                     <option value="">Select State</option>
-                                    <?php
-                                    $states = [
-                                        'Johor', 'Kedah', 'Kelantan', 'Melaka', 'Negeri Sembilan', 'Pahang', 'Perak', 'Perlis',
-                                        'Penang', 'Sabah', 'Sarawak', 'Selangor', 'Terengganu', 'Kuala Lumpur', 'Labuan', 'Putrajaya'
-                                    ];
-                                    foreach ($states as $state_option) {
-                                        echo "<option value=\"$state_option\">$state_option</option>";
-                                    }
-                                    ?>
+                                    <option value="Johor">Johor</option>
+                                    <option value="Kedah">Kedah</option>
+                                    <option value="Kelantan">Kelantan</option>
+                                    <option value="Malacca">Malacca</option>
+                                    <option value="Negeri Sembilan">Negeri Sembilan</option>
+                                    <option value="Pahang">Pahang</option>
+                                    <option value="Penang">Penang</option>
+                                    <option value="Perak">Perak</option>
+                                    <option value="Perlis">Perlis</option>
+                                    <option value="Sabah">Sabah</option>
+                                    <option value="Sarawak">Sarawak</option>
+                                    <option value="Selangor">Selangor</option>
+                                    <option value="Terengganu">Terengganu</option>
+                                    <option value="Kuala Lumpur">Kuala Lumpur</option>
+                                    <option value="Putrajaya">Putrajaya</option>
+                                    <option value="Labuan">Labuan</option>
                                 </select>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Payment Method -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">Payment Method</h5>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="duitnow" value="DuitNow" checked>
-                                <label class="form-check-label" for="duitnow">
-                                    DuitNow
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="tng" value="Touch N Go">
-                                <label class="form-check-label" for="tng">
-                                    Touch 'n Go (TNG)
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="Bank Transfer">
-                                <label class="form-check-label" for="bank_transfer">
-                                    Bank Transfer
-                                </label>
-                            </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Phone Number</label>
+                            <input class="form-input" type="tel" name="phone" id="phone" pattern="[0-9\-\+]{10,13}" title="Phone number (10-13 digits)" required>
                         </div>
                     </div>
-
-                    <!-- Upload Transaction Receipt -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">Upload Transaction Receipt</h5>
-                            <div class="mb-3">
-                                <label for="receipt_image" class="form-label">Receipt Image</label>
-                                <input type="file" class="form-control" id="receipt_image" name="receipt_image" accept="image/jpeg, image/png">
-                                <small class="form-text text-muted">Please upload an image of your transaction receipt (JPEG/PNG).</small>
+                    
+                    <!-- Payment Method Section -->
+                    <div class="checkout-section">
+                        <h2 class="section-title">Payment Method</h2>
+                        
+                        <div class="payment-method">
+                            <div class="payment-method-label" style="display: flex; align-items: center; border: 2px solid #d38db2; background-color: #faf4f8; padding: 15px;">
+                                <i class="fas fa-university" style="font-size: 24px; margin-right: 10px;"></i>
+                                <strong>Cash on Delivery</strong>
                             </div>
                         </div>
+                        
+                        <!-- Hidden input with fixed payment method -->
+                        <input type="hidden" name="payment_method" value="Cash on Delivery">
                     </div>
-
-                    <!-- Place Order Button -->
-                    <button type="submit" class="btn btn-dark btn-lg w-100">Place Order</button>
-                </form>
-            </div>
-
-            <!-- Right Column: Order Summary -->
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Order Summary</h5>
-                        <?php foreach ($cart_items as $item): ?>
-                            <div class="d-flex justify-content-between mb-2">
+                    
+                    <!-- Transaction Proof Upload Section -->
+                    <!-- <div class="checkout-section">
+                        <h2 class="section-title">Proof of Transaction</h2>
+                        
+                        <div class="file-upload-container" id="upload-container">
+                            <input type="file" name="transaction_proof" id="transaction_proof" class="file-upload-input" accept="image/*" required>
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">
+                                <strong>Click to upload</strong> or drag and drop
+                            </div>
+                            <div class="upload-info">
+                                Supported formats: JPG, PNG, PDF (Max size: 5MB)
+                            </div>
+                            <div class="selected-file" id="selected-file">
+                                No file selected
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+                
+                <!-- Order Summary Section -->
+                <div class="checkout-summary">
+                    <div class="checkout-section">
+                        <h2 class="section-title">Order Summary</h2>
+                        
+                        <?php foreach($cart_items as $item): ?>
+                            <div class="order-summary-item">
                                 <span><?php echo htmlspecialchars($item['ProductName']); ?> x <?php echo $item['Quantity']; ?></span>
-                                <span>RM<?php echo number_format($item['Price'] * $item['Quantity'], 2); ?></span>
+                                <span>RM <?php echo number_format($item['Price'] * $item['Quantity'], 2); ?></span>
                             </div>
                         <?php endforeach; ?>
-                        <!-- Shipping Fee -->
-                        <div class="d-flex justify-content-between mb-2">
+                        
+                        <!-- Shipping Fee Row -->
+                        <div class="order-summary-item" id="shipping-fee-row">
                             <span>Shipping Fee</span>
-                            <span>RM<?php echo number_format($shipping_fee, 2); ?></span>
+                            <span id="shipping-fee-display">RM 5.00</span>
                         </div>
-                        <hr>
-                        <!-- Total -->
-                        <div class="d-flex justify-content-between">
+                        
+                        <div class="order-summary-item order-total">
                             <strong>Total</strong>
-                            <strong>RM<?php echo number_format($total_with_shipping, 2); ?></strong>
+                            <strong id="total-amount">RM <?php echo number_format($total + 5, 2); ?></strong>
                         </div>
+                        
+                        <!-- Hidden input for shipping fee -->
+                        <input type="hidden" name="shipping_fee" id="shipping-fee-input" value="5">
+                        
+                        <!-- If selected_items is passed, include them in the form -->
+                        <?php if (isset($_POST['selected_items'])): ?>
+                            <?php if (!is_array($_POST['selected_items'])): ?>
+                                <input type="hidden" name="selected_items" value="<?php echo htmlspecialchars($_POST['selected_items']); ?>">
+                            <?php else: ?>
+                                <?php foreach ($_POST['selected_items'] as $item): ?>
+                                    <input type="hidden" name="selected_items[]" value="<?php echo htmlspecialchars($item); ?>">
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <button type="submit" name="checkout" class="btn-checkout">
+                            Complete Order
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
-
-    <footer class="bg-dark text-white py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5>About Us</h5>
-                    <p>Your trusted source for premium health and beauty products.</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="index.php" class="text-white">Home</a></li>
-                        <li><a href="products.php" class="text-white">Products</a></li>
-                        <li><a href="contact.php" class="text-white">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5>Contact Us</h5>
-                    <p>Email: info@beautywellness.com<br>
-                    Phone: (123) 456-7890</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // File upload handling
+        const uploadInput = document.getElementById('transaction_proof');
+        const uploadContainer = document.getElementById('upload-container');
+        const selectedFileDiv = document.getElementById('selected-file');
+        
+        // Standard file upload functionality
+        uploadInput?.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const fileName = this.files[0].name;
+                selectedFileDiv.textContent = fileName;
+                selectedFileDiv.style.display = 'block';
+            } else {
+                selectedFileDiv.textContent = 'No file selected';
+                selectedFileDiv.style.display = 'none';
+            }
+        });
+        
+        // Drag and drop functionality for file upload
+        if (uploadContainer) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+            });
+        }
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        if (uploadContainer) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventNameventListener(eventName, unhighlight, false);
+            });
+            
+            uploadContainer.addEventListener('drop', handleDrop, false);
+        }
+        
+        function highlight() {
+            uploadContainer.classList.add('active');
+        }
+        
+        function unhighlight() {
+            uploadContainer.classList.remove('active');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                uploadInput.files = files;
+                const fileName = files[0].name;
+                selectedFileDiv.textContent = fileName;
+                selectedFileDiv.style.display = 'block';
+            }
+        }
+        
+        // Payment method handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+            const hiddenInput = document.getElementById('selected_payment_method');
+            
+            // Set initial value
+            const checkedMethod = document.querySelector('input[name="payment_method"]:checked');
+            if (checkedMethod && hiddenInput) {
+                hiddenInput.value = checkedMethod.value;
+                console.log("Initial payment method: " + hiddenInput.value);
+            }
+            
+            // Update when selection changes
+            paymentMethods.forEach(method => {
+                method.addEventListener('change', function() {
+                    if (hiddenInput) {
+                        hiddenInput.value = this.value;
+                        console.log("Payment method selected: " + this.value);
+                        console.log("Hidden input updated: " + hiddenInput.value);
+                    }
+                });
+            });
+            
+            // Add form submission debug
+            document.querySelector('form').addEventListener('submit', function(e) {
+                if (hiddenInput) {
+                    console.log("Form submitting with payment method: " + hiddenInput.value);
+                }
+            });
+            
+            // Shipping fee calculation based on state
+            const stateSelect = document.getElementById('state');
+            const shippingFeeRow = document.getElementById('shipping-fee-row');
+            const shippingFeeDisplay = document.getElementById('shipping-fee-display');
+            const shippingFeeInput = document.getElementById('shipping-fee-input');
+            const totalAmountDisplay = document.getElementById('total-amount');
+            const cartTotal = <?php echo $total; ?>;
+            
+            // Initially hide the shipping fee row if no state is selected
+            if (stateSelect && stateSelect.value === '') {
+                shippingFeeRow.style.display = 'none';
+                shippingFeeInput.value = 0;
+                totalAmountDisplay.textContent = `RM ${cartTotal.toFixed(2)}`;
+            }
+            
+            if (stateSelect) {
+                stateSelect.addEventListener('change', updateShippingFee);
+                
+                function updateShippingFee() {
+                    const selectedState = stateSelect.value;
+                    let shippingFee = 5; // Default shipping fee
+                    
+                    // Check if state is empty
+                    if (selectedState === '') {
+                        // Hide shipping fee row
+                        shippingFeeRow.style.display = 'none';
+                        shippingFee = 0;
+                    } else {
+                        // Show shipping fee row
+                        shippingFeeRow.style.display = 'flex';
+                        
+                        // Check if selected state is Sabah, Sarawak or Labuan
+                        if (selectedState === 'Sabah' || selectedState === 'Sarawak' || selectedState === 'Labuan') {
+                            shippingFee = 10; // Higher shipping fee for East Malaysia
+                        }
+                    }
+                    
+                    // Update the shipping fee display
+                    shippingFeeDisplay.textContent = `RM ${shippingFee.toFixed(2)}`;
+                    
+                    // Update the hidden input
+                    shippingFeeInput.value = shippingFee;
+                    
+                    // Update the total amount
+                    const newTotal = cartTotal + shippingFee;
+                    totalAmountDisplay.textContent = `RM ${newTotal.toFixed(2)}`;
+                    
+                    console.log(`Shipping fee updated: ${selectedState === '' ? 'Hidden' : 'RM' + shippingFee.toFixed(2)} for ${selectedState || 'No state selected'}`);
+                }
+            }
+        });
+    </script>
 </body>
 </html>
+<?php require_once __DIR__ . '/../_foot.php'; ?>

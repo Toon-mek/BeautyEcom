@@ -60,7 +60,7 @@ $total = calculateCartTotal($cart_items);
         <?php endif; ?>
 
         <?php if(count($cart_items) > 0): ?>
-            <form method="POST" action="" id="cartForm">
+            <form method="POST" action="checkout.php" id="cartForm">
                 <div class="cart-grid">
                     <div class="cart-items">
                         <div class="select-all-container">
@@ -68,7 +68,7 @@ $total = calculateCartTotal($cart_items);
                             <label for="selectAll" class="select-all-label">Select All Items</label>
                             <div style="flex-grow: 1;"></div>
                             <div class="selected-items-count">
-                                <span id="selectedCount">0</span> items selected
+                                <span id="headerSelectedCount">0</span> items selected
                             </div>
                         </div>
 
@@ -76,7 +76,7 @@ $total = calculateCartTotal($cart_items);
                             <div class="cart-item" data-price="<?php echo $item['Price'] * $item['Quantity']; ?>">
                                 <div class="cart-item-content">
                                     <input type="checkbox" 
-                                           name="selected_items[]" 
+                                           name="selected_items" 
                                            value="<?php echo $item['CartItemID']; ?>"
                                            class="item-checkbox"
                                            data-price="<?php echo $item['Price'] * $item['Quantity']; ?>">
@@ -100,7 +100,7 @@ $total = calculateCartTotal($cart_items);
                                             <i class="fas fa-minus"></i>
                                         </button>
                                         <input type="number" 
-                                               class="quantity-input"
+                                               class="quantity-input-cart"
                                                name="quantity[<?php echo $item['CartItemID']; ?>]" 
                                                value="<?php echo $item['Quantity']; ?>"
                                                min="1"
@@ -138,7 +138,7 @@ $total = calculateCartTotal($cart_items);
                     <div class="cart-summary">
                         <h5>Order Summary</h5>
                         <div class="selected-items-count">
-                            <span id="selectedCount">0</span> items selected
+                            <span id="summarySelectedCount">0</span> items selected
                         </div>
                         <div class="summary-row">
                             <span>Subtotal</span>
@@ -149,7 +149,7 @@ $total = calculateCartTotal($cart_items);
                             <strong>Total</strong>
                             <strong id="total">RM 0.00</strong>
                         </div>
-                        <button type="submit" name="checkout" class="checkout-btn" disabled>
+                        <button type="submit" class="checkout-btn" disabled>
                             Proceed to Checkout
                         </button>
                     </div>

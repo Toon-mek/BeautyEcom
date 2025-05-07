@@ -19,7 +19,7 @@ $staff = $stmt->fetch();
 
 // If not first time login or profile already completed, redirect to admin panel
 if (!$staff['FirstTimeLogin']) {
-    header("Location: ../admin/adminindex.php");
+    header("Location: ../auth/staffLogin.php");
     exit();
 }
 
@@ -45,10 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!file_exists($targetDir)) {
                 mkdir($targetDir, 0777, true);
             }
-            
+
             $fileName = uniqid() . "_" . basename($_FILES['profile_photo']['name']);
             $targetFile = $targetDir . $fileName;
-            
+
             if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $targetFile)) {
                 $profilePhoto = $fileName;
             }
@@ -73,19 +73,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateFields['Password'] = password_hash($newPassword, PASSWORD_DEFAULT);
             }
 
-            $sql = "UPDATE staff SET " . 
-                   implode(" = ?, ", array_keys($updateFields)) . " = ? " .
-                   "WHERE StaffUsername = ?";
+            $sql = "UPDATE staff SET " .
+                implode(" = ?, ", array_keys($updateFields)) . " = ? " .
+                "WHERE StaffUsername = ?";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([...array_values($updateFields), $_SESSION['staff_id']]);
 
             $pdo->commit();
-            
+
             // Redirect to admin panel
             header("Location: ../admin/adminindex.php?success=Profile setup completed");
             exit();
-
         } catch (Exception $e) {
             $pdo->rollBack();
             $error = "An error occurred while setting up your profile. Please try again.";
@@ -95,6 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -108,19 +108,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 30px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
         .welcome-message {
             text-align: center;
             margin-bottom: 30px;
         }
+
         .welcome-message h1 {
             color: #2c3e50;
             margin-bottom: 10px;
         }
+
         .welcome-message p {
             color: #7f8c8d;
         }
+
         .preview-image {
             width: 150px;
             height: 150px;
@@ -131,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     </style>
 </head>
+
 <body>
     <div class="setup-container">
         <div class="welcome-message">
@@ -138,65 +143,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>Please complete your profile to continue</p>
         </div>
 
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
+        <?php if (isset($_GET['setup']) && $_GET['setup'] == 1): ?>
+            <div class="alert-box alert-success">🎉 Profile setup completed. Please login.</div>
         <?php endif; ?>
 
-        <form method="POST" enctype="multipart/form-data" class="crud-form">
+        <form method="POST" enctype="multipart/form-data" class="crud-form" onsubmit="return formValidation('staff')">
             <div style="text-align: center; margin-bottom: 30px;">
                 <img id="photoPreview" src="../uploads/default-avatar.png" class="preview-image" alt="">
             </div>
-
             <label>Profile Photo</label>
             <input type="file" name="profile_photo" accept="image/*" onchange="previewImage(this)">
-
             <label>Full Name</label>
-            <input type="text" name="name" required>
-
+            <input type="text" name="name" id="name" required>
             <label>Email</label>
-            <input type="email" name="email" required>
-
+            <input type="email" name="email" id="email" required>
             <label>Contact Number</label>
-            <input type="text" name="contact" required>
-
+            <input type="text" name="contact" id="phone" required>
             <label>Password</label>
-            <input type="password" name="new_password" id="new_password">
-            
+            <input type="password" name="password" id="password">
             <label>Confirm New Password</label>
             <input type="password" name="confirm_password" id="confirm_password">
-            
             <div id="password_error" style="color: red; display: none;">Passwords do not match!</div>
-
             <button type="submit" class="crud-btn" style="background:#2ecc71;color:white;width:100%;">
                 Complete Profile Setup
             </button>
         </form>
     </div>
-
-    <script>
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('photoPreview').src = e.target.result;
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    // Password validation
-    document.getElementById('editForm').addEventListener('submit', function(e) {
-        const newPassword = document.getElementById('new_password').value;
-        const confirmPassword = document.getElementById('confirm_password').value;
-        const errorDiv = document.getElementById('password_error');
-
-        if (newPassword && newPassword !== confirmPassword) {
-            e.preventDefault();
-            errorDiv.style.display = 'block';
-        } else {
-            errorDiv.style.display = 'none';
-        }
-    });
-    </script>
+    <script src="../js/staffSetup.js"></script>
 </body>
-</html> 
+
+</html>
