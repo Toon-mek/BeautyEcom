@@ -3,7 +3,25 @@ require_once __DIR__ . '/../_base.php';
 // Redirect if not logged in
 redirectIfNotLoggedIn();
 // Get cart items
-$cart_items = getCartItems(pdo: $pdo);
+$selected_ids = $_POST['selected_items'] ?? [];
+if (empty($selected_ids)) {
+    header("Location: cart.php");
+    exit();
+}
+$selected_ids = array_map('intval', $selected_ids); // sanitize
+$placeholders = rtrim(str_repeat('?,', count($selected_ids)), ',');
+$stmt = $pdo->prepare("
+    SELECT ci.*, p.ProductName, p.Price, p.ProdIMG1 
+    FROM cartitem ci 
+    JOIN product p ON ci.ProductID = p.ProductID 
+    JOIN cart c ON ci.CartID = c.CartID 
+    WHERE ci.CartItemID IN ($placeholders) 
+    AND c.MemberID = ? AND c.CartStatus = 'Active'
+");
+$stmt->execute([...$selected_ids, $_SESSION['member_id']]);
+$cart_items = $stmt->fetchAll();
+// Total only selected items
+$total = calculateCartTotal($cart_items);
 // Redirect if cart is empty
 redirectIfCartIsEmpty($cart_items);
 // Calculate total
@@ -11,15 +29,12 @@ $total = calculateCartTotal($cart_items);
 // Handle checkout
 // $error = processCheckout($pdo, $cart_items, $total);
 $error = null;
-
 handleCartActions($pdo);
-
 ?>
 
 <?php require_once __DIR__ . '/../_head.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
