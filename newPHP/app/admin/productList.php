@@ -172,21 +172,21 @@ function buildSortLink($column, $label)
                             <td><?php echo $product['Quantity']; ?></td>
                             <td>
                                 <?php if ($product['ProdIMG1']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="product-img-thumb" alt="IMG1">
+                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
                                 <?php else: ?>
                                     <span style="color:#aaa;">No Img</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($product['ProdIMG2']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG2']); ?>" class="product-img-thumb" alt="IMG2">
+                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG2']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
                                 <?php else: ?>
                                     <span style="color:#aaa;">No Img</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <?php if ($product['ProdIMG3']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG3']); ?>" class="product-img-thumb" alt="IMG3">
+                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG3']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
                                 <?php else: ?>
                                     <span style="color:#aaa;">No Img</span>
                                 <?php endif; ?>

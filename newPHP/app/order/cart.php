@@ -81,9 +81,16 @@ $total = calculateCartTotal($cart_items);
                                            class="item-checkbox"
                                            data-price="<?php echo $item['Price'] * $item['Quantity']; ?>">
                                            
+                                    <?php if (!empty($item['ProdIMG1']) && file_exists("../uploads/" . $item['ProdIMG1'])): ?>
                                     <img src="../uploads/<?php echo htmlspecialchars($item['ProdIMG1']); ?>" 
                                          class="product-image" 
+                                         alt="<?php echo htmlspecialchars($item['ProductName']); ?>"
+                                         onerror="this.onerror=null; this.src='../uploads/default-product.jpg';">
+                                    <?php else: ?>
+                                    <img src="../uploads/default-product.jpg" 
+                                         class="product-image" 
                                          alt="<?php echo htmlspecialchars($item['ProductName']); ?>">
+                                    <?php endif; ?>
                                     
                                     <div class="product-info">
                                         <h5 class="product-name"><?php echo htmlspecialchars($item['ProductName']); ?></h5>

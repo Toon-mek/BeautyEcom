@@ -1,129 +1,154 @@
-function updateQuantity(cartItemId, change) {
-    const input = document.querySelector(`input[data-cart-item-id="${cartItemId}"]`);
-    const newValue = Math.max(1, Math.min(parseInt(input.value) + change, parseInt(input.max)));
-    input.value = newValue;
-    handleQuantityChange(input);
-}
-
-function handleQuantityChange(input) {
-    const cartItemId = input.dataset.cartItemId;
-    const quantity = input.value;
-    
-    // Update the item total
-    const price = parseFloat(input.dataset.price);
-    const itemTotal = price * quantity;
-    const cartItem = input.closest('.cart-item');
-    const itemTotalElement = cartItem.querySelector('.item-total-price');
-    itemTotalElement.textContent = `RM ${itemTotal.toFixed(2)}`;
-    
-    // Update the checkbox data-price
-    const checkbox = cartItem.querySelector('.item-checkbox');
-    checkbox.dataset.price = itemTotal;
-    
-    // Update the cart item data-price
-    cartItem.dataset.price = itemTotal;
-    
-    // Update the selected total if the item is selected
-    if (checkbox.checked) {
-        updateSelectedTotal();
-    }
-    
-    // Submit the form to update the cart
-    const form = document.getElementById('cartForm');
-    const formData = new FormData(form);
-    formData.append('update_cart', '1');
-    
-    fetch(form.action, {
-        method: 'POST',
-        body: formData
-    }).then(response => {
-        if (response.ok) {
-            // Update successful
-        }
-    }).catch(error => {
-        console.error('Error updating cart:', error);
-    });
-}
-
-// Handle item selection
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const cartItem = this.closest('.cart-item');
-            if (this.checked) {
-                cartItem.classList.add('selected');
-            } else {
-                cartItem.classList.remove('selected');
-            }
-            updateSelectedTotal();
-            updateCheckoutButton();
-        });
-    });
-
-    // Handle select all
+    const cartForm = document.getElementById('cartForm');
     const selectAllCheckbox = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    const noSelectionMessage = document.querySelector('.no-selection-message');
+    const selectedCountElements = document.querySelectorAll('.selected-items-count span');
+
+    // Initialize the cart state
+    updateCartSummary();
+    updateNoSelectionMessage();
+
+    // Handle "Select All" functionality
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.item-checkbox');
-            checkboxes.forEach(checkbox => {
+            itemCheckboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
-                const cartItem = checkbox.closest('.cart-item');
-                if (this.checked) {
-                    cartItem.classList.add('selected');
-                } else {
-                    cartItem.classList.remove('selected');
-                }
             });
-            updateSelectedTotal();
-            updateCheckoutButton();
+            updateCartSummary();
+            updateNoSelectionMessage();
         });
     }
 
-    // Initialize the summary
-    updateSelectedTotal();
-    updateCheckoutButton();
+    // Handle individual item selection
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllCheckbox();
+            updateCartSummary();
+            updateNoSelectionMessage();
+        });
+    });
 
-    // Add form submission handler
-    const cartForm = document.getElementById('cartForm');
+    // Handle quantity updates
+    window.updateQuantity = function(cartItemId, change) {
+        const input = document.querySelector(`input[data-cart-item-id="${cartItemId}"]`);
+        if (input) {
+            const currentValue = parseInt(input.value);
+            const maxValue = parseInt(input.getAttribute('max'));
+            const newValue = currentValue + change;
+            
+            if (newValue >= 1 && newValue <= maxValue) {
+                input.value = newValue;
+                handleQuantityChange(input);
+            }
+        }
+    };
+
+    // Handle quantity input changes
+    window.handleQuantityChange = function(input) {
+        const cartItemId = input.dataset.cartItemId;
+        const price = parseFloat(input.dataset.price);
+        const quantity = parseInt(input.value);
+        const maxQuantity = parseInt(input.getAttribute('max'));
+
+        // Validate quantity
+        if (quantity < 1) {
+            input.value = 1;
+        } else if (quantity > maxQuantity) {
+            input.value = maxQuantity;
+        }
+
+        // Update item total price
+        const itemTotal = price * parseInt(input.value);
+        const itemTotalElement = input.closest('.cart-item-content').querySelector('.item-total-price');
+        if (itemTotalElement) {
+            itemTotalElement.textContent = `RM ${itemTotal.toFixed(2)}`;
+        }
+
+        // Update cart item data price attribute
+        const cartItem = input.closest('.cart-item');
+        if (cartItem) {
+            cartItem.dataset.price = itemTotal;
+        }
+
+        // Update cart summary
+        updateCartSummary();
+
+        // Send AJAX request to update quantity in database
+        fetch('../api/update_cart.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `cart_item_id=${cartItemId}&quantity=${input.value}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                console.error('Failed to update quantity:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating quantity:', error);
+        });
+    };
+
+    // Update cart summary totals
+    function updateCartSummary() {
+        let subtotal = 0;
+        let selectedCount = 0;
+
+        itemCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const cartItem = checkbox.closest('.cart-item');
+                subtotal += parseFloat(cartItem.dataset.price);
+                selectedCount++;
+            }
+        });
+
+        // Update selected count
+        selectedCountElements.forEach(element => {
+            element.textContent = selectedCount;
+        });
+
+        // Update subtotal and total
+        document.getElementById('subtotal').textContent = `RM ${subtotal.toFixed(2)}`;
+        document.getElementById('total').textContent = `RM ${subtotal.toFixed(2)}`;
+
+        // Enable/disable checkout button
+        if (checkoutBtn) {
+            checkoutBtn.disabled = selectedCount === 0;
+        }
+    }
+
+    // Update "Select All" checkbox state
+    function updateSelectAllCheckbox() {
+        if (selectAllCheckbox) {
+            const allChecked = Array.from(itemCheckboxes).every(checkbox => checkbox.checked);
+            const someChecked = Array.from(itemCheckboxes).some(checkbox => checkbox.checked);
+            
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        }
+    }
+
+    // Update visibility of no selection message
+    function updateNoSelectionMessage() {
+        if (noSelectionMessage) {
+            const hasSelectedItems = Array.from(itemCheckboxes).some(checkbox => checkbox.checked);
+            noSelectionMessage.style.display = hasSelectedItems ? 'none' : 'block';
+        }
+    }
+
+    // Handle form submission
     if (cartForm) {
         cartForm.addEventListener('submit', function(e) {
-            const submitButton = e.submitter;
-            if (submitButton && submitButton.name === 'checkout') {
-                const selectedItems = document.querySelectorAll('.item-checkbox:checked').length;
-                if (selectedItems === 0) {
-                    e.preventDefault();
-                    return;
-                }
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            const hasSelectedItems = Array.from(itemCheckboxes).some(checkbox => checkbox.checked);
+            if (!hasSelectedItems && e.submitter.name === 'checkout') {
+                e.preventDefault();
+                alert('Please select at least one item to proceed to checkout.');
             }
         });
     }
-});
-
-function updateSelectedTotal() {
-    let selectedTotal = 0;
-    const selectedItems = document.querySelectorAll('.item-checkbox:checked');
-    
-    selectedItems.forEach(checkbox => {
-        selectedTotal += parseFloat(checkbox.dataset.price);
-    });
-    
-    document.getElementById('subtotal').textContent = `RM ${selectedTotal.toFixed(2)}`;
-    document.getElementById('total').textContent = `RM ${selectedTotal.toFixed(2)}`;
-    document.getElementById('selectedCount').textContent = selectedItems.length;
-}
-
-function updateCheckoutButton() {
-    const selectedItems = document.querySelectorAll('.item-checkbox:checked').length;
-    const checkoutBtn = document.querySelector('.checkout-btn');
-    const noSelectionMsg = document.querySelector('.no-selection-message');
-    
-    if (selectedItems > 0) {
-        checkoutBtn.disabled = false;
-        noSelectionMsg.style.display = 'none';
-    } else {
-        checkoutBtn.disabled = true;
-        noSelectionMsg.style.display = 'block';
-    }
-} 
+}); 
