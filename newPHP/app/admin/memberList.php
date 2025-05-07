@@ -95,30 +95,36 @@ function buildSortLink($column, $label)
         <div class="admin-main-content">
             <h1>Member Management</h1>
 
-            <form method="GET" style="margin-bottom: 20px;">
-                <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search members..." class="crud-select">
-                <select name="status_filter" class="crud-select">
-                    <option value="">All Status</option>
-                    <option value="Active" <?php if ($statusFilter === 'Active') {
-                                                echo 'selected';
-                                            }
-                                            ?>>Active</option>
-                    <option value="Blocked" <?php if ($statusFilter === 'Blocked') {
-                                                echo 'selected';
-                                            }
-                                            ?>>Blocked</option>
-                </select>
-                <select name="sort">
-                    <option value="MemberID" <?php echo ($sort === 'MemberID') ? 'selected' : ''; ?>>ID</option>
-                    <option value="Username" <?php echo ($sort === 'Username') ? 'selected' : ''; ?>>Username</option>
-                    <option value="Email" <?php echo ($sort === 'Email') ? 'selected' : ''; ?>>Email</option>
-                    <option value="Phone" <?php echo ($sort === 'Phone') ? 'selected' : ''; ?>>Phone</option>
-                    <option value="Address" <?php echo ($sort === 'Address') ? 'selected' : ''; ?>>Address</option>
-                </select>
-                <select name="order">
-                    <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
-                    <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
-                </select>
+            <form method="GET" style="margin-bottom: 20px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="search" style="margin-bottom: 5px;">Search</label>
+                    <input type="text" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Search members..." class="crud-select">
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="status_filter" style="margin-bottom: 5px;">Status</label>
+                    <select name="status_filter" id="status_filter" class="crud-select">
+                        <option value="">All Status</option>
+                        <option value="Active" <?php if ($statusFilter === 'Active') { echo 'selected'; } ?>>Active</option>
+                        <option value="Blocked" <?php if ($statusFilter === 'Blocked') { echo 'selected'; } ?>>Blocked</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="sort" style="margin-bottom: 5px;">Sort By</label>
+                    <select name="sort" id="sort" class="crud-select">
+                        <option value="MemberID" <?php echo ($sort === 'MemberID') ? 'selected' : ''; ?>>ID</option>
+                        <option value="Username" <?php echo ($sort === 'Username') ? 'selected' : ''; ?>>Username</option>
+                        <option value="Email" <?php echo ($sort === 'Email') ? 'selected' : ''; ?>>Email</option>
+                        <option value="Phone" <?php echo ($sort === 'Phone') ? 'selected' : ''; ?>>Phone</option>
+                        <option value="Address" <?php echo ($sort === 'Address') ? 'selected' : ''; ?>>Address</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="display: flex; flex-direction: column;">
+                    <label for="order" style="margin-bottom: 5px;">Order</label>
+                    <select name="order" id="order" class="crud-select">
+                        <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
+                        <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
+                    </select>
+                </div>
             </form>
 
             <?php if (isset($_GET['success'])): ?>

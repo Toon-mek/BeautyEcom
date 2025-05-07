@@ -144,64 +144,48 @@ if (isset($_POST['edit_staff'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Staff Management</title>
     <link href="../css/admin.css" rel="stylesheet">
 </head>
-
 <body>
     <div class="admin-flex-container">
         <?php include 'adminSidebar.php'; ?>
         <div class="admin-main-content">
             <h1>Staff Management</h1>
-
-            <!-- Add Staff Button -->
-            <button onclick="showAddForm()" class="crud-btn" style="background:#2ecc71;color:white;margin-bottom:20px;">
-                Add New Staff
-            </button>
-
-            <div class="filters-section" style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <div class="filters-section">
                 <form method="GET" class="filters-form" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: nowrap;">
-                    <div class="filter-group" style="flex: 2;">
+                    <div class="filter-group" style="flex: 2; display: flex; flex-direction: column;">
                         <label for="search" style="display: block; margin-bottom: 5px;">Search</label>
                         <input type="text" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>"
-                            placeholder="Search name, username or email" class="crud-select" style="width: 100%;">
+                            placeholder="Search name, username or email" class="crud-select" style="width: 100%;" onchange="this.form.submit()">
                     </div>
-                    
-                    <div class="filter-group" style="flex: 1;">
+                    <div class="filter-group" style="flex: 1; display: flex; flex-direction: column;">
                         <label for="status_filter" style="display: block; margin-bottom: 5px;">Status</label>
-                        <select name="status_filter" id="status_filter" class="crud-select" style="width: 100%;">
+                        <select name="status_filter" id="status_filter" class="crud-select" style="width: 100%;" onchange="this.form.submit()">
                             <option value="">All Status</option>
                             <option value="Active" <?php if ($statusFilter === 'Active') echo 'selected'; ?>>Active</option>
                             <option value="Inactive" <?php if ($statusFilter === 'Inactive') echo 'selected'; ?>>Inactive</option>
                         </select>
                     </div>
-
-                    <div class="filter-group" style="flex: 1;">
+                    <div class="filter-group" style="flex: 1; display: flex; flex-direction: column;">
                         <label for="sort" style="display: block; margin-bottom: 5px;">Sort By</label>
-                        <select name="sort" id="sort" class="crud-select" style="width: 100%;">
+                        <select name="sort" id="sort" class="crud-select" style="width: 100%;" onchange="this.form.submit()">
                             <option value="CreatedAt" <?php if ($sort === 'CreatedAt') echo 'selected'; ?>>Created At</option>
                             <option value="StaffName" <?php if ($sort === 'StaffName') echo 'selected'; ?>>Name</option>
                             <option value="StaffUsername" <?php if ($sort === 'StaffUsername') echo 'selected'; ?>>Username</option>
                         </select>
                     </div>
-
-                    <div class="filter-group" style="flex: 1;">
+                    <div class="filter-group" style="flex: 1; display: flex; flex-direction: column;">
                         <label for="order" style="display: block; margin-bottom: 5px;">Order</label>
-                        <select name="order" id="order" class="crud-select" style="width: 100%;">
+                        <select name="order" id="order" class="crud-select" style="width: 100%;" onchange="this.form.submit()">
                             <option value="desc" <?php if ($dir === 'desc') echo 'selected'; ?>>Descending</option>
                             <option value="asc" <?php if ($dir === 'asc') echo 'selected'; ?>>Ascending</option>
                         </select>
                     </div>
-
-                    <div class="filter-group" style="flex: 0 0 auto;">
-                        <button type="submit" class="crud-btn" style="background:#3498db; color:white; white-space: nowrap; padding: 0.75rem 0.5rem; margin-top: 0;">
-                            Apply Filters
-                        </button>
-                    </div>
                 </form>
+                <button onclick="showAddForm()" class="crud-btn add-btn" style="background:#2ecc71;color:white;margin-top:16px;">Add New Staff</button>
             </div>
 
             <?php if (isset($_GET['success'])): ?>
@@ -327,5 +311,4 @@ if (isset($_POST['edit_staff'])) {
 
     <script src="../js/staffList.js"></script>
 </body>
-
 </html>

@@ -45,7 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <?php
-
 require_once __DIR__ . '/_base.php';
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/_head.php';
@@ -70,7 +69,6 @@ foreach ($categories as $category) {
     }
 }
 ?>
-
 <div class="hero-section">
     <div class="hero-content">
         <h1>Discover Your Beauty Journey</h1>
@@ -131,25 +129,23 @@ foreach ($categories as $category) {
     </div>
 </div>
 
-<!-- Chatbot Popup -->
-<div id="chat-popup">
-    <div class="chat-header">
+<div id="chat-popup" style="position: fixed; bottom: 80px; right: 20px; width: 350px; max-height: 500px; display: none; flex-direction: column; background: #fff; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 9999;">
+    <div style="padding: 10px; background: #f4f4f4; border-bottom: 1px solid #ccc; border-top-left-radius: 10px; border-top-right-radius: 10px;">
         <strong>Chatbot Steve</strong>
-        <div class="chat-close">
-            <button onclick="toggleChat()">&times;</button>
+        <div style="float: right;">
+            <button onclick="toggleChat()" style="background: none; border: none; font-size: 16px; cursor: pointer;">&times;</button>
         </div>
     </div>
-    <div id="chatbox" class="chatbox">
+    <div id="chatbox" style="flex: 1; height: 350px; overflow-y: auto; padding: 15px; background: #f9f9f9;">
     </div>
-    <div class="chat-input">
-        <input type="text" id="userInput" placeholder="Type a message...">
-        <button onclick="sendMessage()">Send</button>
+    <div style="padding: 10px; border-top: 1px solid #ddd; background: #fff; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px;">
+        <input type="text" id="userInput" placeholder="Type a message..." style="width: 80%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <button onclick="sendMessage()" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Send</button>
     </div>
 </div>
-<button class="chat-toggle" onclick="toggleChat()">💬</button>
+<button onclick="toggleChat()" style="position: fixed; bottom: 20px; right: 20px; background: #007bff; color: #fff; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 20px; cursor: pointer; z-index: 1000;">💬</button>
 
 <script src="js/index.js"></script>
-
 <?php
 function processUserQuery($message, $conn) {
     try {
@@ -499,12 +495,10 @@ function processUserQuery($message, $conn) {
                "🏷️ Show category products\n" .
                "💰 Check product prices\n\n" .
                "What would you like to know about?";
-
     } catch (Exception $e) {
         error_log("Error in processUserQuery: " . $e->getMessage());
         throw $e; // Re-throw the exception to be caught by the main handler
     }
 }
 ?>
-
 <?php require_once __DIR__ . '/_foot.php'; ?>
