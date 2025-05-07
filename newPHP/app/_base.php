@@ -543,16 +543,25 @@ function getTotalProducts()
     return $pdo->query("SELECT COUNT(*) FROM product")->fetchColumn();
 }
 
-function getPendingOrders()
-{
-    global $pdo;
-    return $pdo->query("SELECT COUNT(*) FROM `order` WHERE OrderStatus = 'Pending'")->fetchColumn();
+function getPendingOrders($pdo) {
+    $query = "SELECT o.OrderID, o.OrderDate, o.OrderTotalAmount, m.Name as CustomerName, 
+              COUNT(oi.OrderItemID) as ItemCount
+              FROM orders o 
+              JOIN member m ON o.MemberID = m.MemberID
+              LEFT JOIN orderitem oi ON o.OrderID = oi.OrderID
+              WHERE o.OrderStatus = 'Pending'
+              GROUP BY o.OrderID
+              ORDER BY o.OrderDate DESC
+              LIMIT 5";
+    $stmt = $pdo->prepare($query);
+    $stmt->execute();
+    return $stmt->fetchAll();
 }
 
-function getTotalSales()
+function getTotalSales($pdo)
 {
-    global $pdo;
-    return $pdo->query("SELECT SUM(OrderTotalAmount) FROM `order` WHERE OrderStatus = 'Completed'")->fetchColumn();
+    $result = $pdo->query("SELECT COALESCE(SUM(AmountPaid), 0) FROM payment WHERE PaymentStatus = 'Paid'")->fetchColumn();
+    return $result;
 }
 
 // ------------------------------
@@ -744,7 +753,7 @@ function redirectIfInvalidOrder($pdo, $order_id) {
 }
 
 function getOrderItems($pdo, $order_id) {
-    $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1, p.Price 
+    $stmt = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1, oi.OrderItemPrice as Price 
                         FROM orderitem oi 
                         JOIN product p ON oi.ProductID = p.ProductID 
                         WHERE oi.OrderID = ?");
@@ -1059,6 +1068,70 @@ function getVoucherById($id)
     $stmt = $pdo->prepare("SELECT * FROM voucher WHERE VoucherID = ?");
     $stmt->execute([$id]);
     return $stmt->fetch();
+}
+
+// Order Management Functions
+function updateOrderStatus($pdo, $orderId, $newStatus) {
+    // Validate status
+    $validStatuses = ['Pending', 'Completed', 'Cancelled'];
+    if (!in_array($newStatus, $validStatuses)) {
+        return false;
+    }
+    
+    try {
+        $stmt = $pdo->prepare("UPDATE orders SET OrderStatus = ? WHERE OrderID = ?");
+        $stmt->execute([$newStatus, $orderId]);
+        return true;
+    } catch (PDOException $e) {
+        error_log("Error updating order status: " . $e->getMessage());
+        return false;
+    }
+}
+
+function getOrders($pdo, $where = '', $params = [], $sort = 'OrderID', $dir = 'desc', $limit = 10, $offset = 0) {
+    $query = "SELECT o.*, m.Name as CustomerName 
+              FROM orders o 
+              LEFT JOIN member m ON o.MemberID = m.MemberID 
+              $where 
+              ORDER BY $sort $dir 
+              LIMIT :limit OFFSET :offset";
+    
+    $stmt = $pdo->prepare($query);
+    
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+    
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+function getOrderDetails($pdo, $orderId) {
+    $orderQuery = "SELECT o.*, m.Name as CustomerName, m.Email, m.PhoneNumber as Phone, m.Address
+                   FROM orders o
+                   LEFT JOIN member m ON o.MemberID = m.MemberID
+                   WHERE o.OrderID = ?";
+    $orderStmt = $pdo->prepare($orderQuery);
+    $orderStmt->execute([$orderId]);
+    return $orderStmt->fetch();
+}
+
+function countOrders($pdo, $where = '', $params = []) {
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM orders o 
+                               LEFT JOIN member m ON o.MemberID = m.MemberID 
+                               $where");
+    $countStmt->execute($params);
+    return $countStmt->fetchColumn();
+}
+
+function buildOrderSortLink($column, $label) {
+    $currentSort = $_GET['sort'] ?? 'OrderID';
+    $currentDir = $_GET['order'] ?? 'desc';
+    $nextDir = ($currentSort === $column && $currentDir === 'asc') ? 'desc' : 'asc';
+    $arrow = ($currentSort === $column) ? ($currentDir === 'asc' ? '↑' : '↓') : '';
+    return "<a href='?sort=$column&order=$nextDir'>" . htmlspecialchars($label) . " $arrow</a>";
 }
 
 ?>

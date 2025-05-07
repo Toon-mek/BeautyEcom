@@ -22,7 +22,7 @@ $allowedSort = ['ProductID', 'CategoryName', 'ProductName', 'Price', 'Quantity']
 $allowedDir = ['asc', 'desc'];
 
 $sort = $_GET['sort'] ?? 'ProductID';
-$dir = $_GET['order'] ?? 'desc';
+$dir = $_GET['order'] ?? 'asc';
 $search = $_GET['search'] ?? '';
 $categoryFilter = $_GET['category_filter'] ?? '';
 $page = max(1, (int) ($_GET['page'] ?? 1));
@@ -35,7 +35,7 @@ if (!in_array($sort, $allowedSort)) {
 }
 
 if (!in_array(strtolower($dir), $allowedDir)) {
-    $dir = 'desc';
+    $dir = 'asc';
 }
 
 // Build WHERE clause
@@ -91,7 +91,7 @@ $categories = fetchAllCategories($pdo);
 function buildSortLink($column, $label)
 {
     $currentSort = $_GET['sort'] ?? 'ProductID';
-    $currentDir = $_GET['order'] ?? 'desc';
+    $currentDir = $_GET['order'] ?? 'asc';
     $nextDir = ($currentSort === $column && $currentDir === 'asc') ? 'desc' : 'asc';
     $arrow = ($currentSort === $column) ? ($currentDir === 'asc' ? '↑' : '↓') : '';
     return "<a href='?sort=$column&order=$nextDir'>" . htmlspecialchars($label) . " $arrow</a>";
@@ -141,11 +141,11 @@ function buildSortLink($column, $label)
                         <option value="Quantity" <?php echo ($sort === 'Quantity') ? 'selected' : ''; ?>>Quantity</option>
                     </select>
                 </div>
-                <div class="filter-group" style="display: flex; flex-direction: column;">
-                    <label for="order" style="margin-bottom: 5px;">Order</label>
-                    <select name="order" id="order" class="crud-select">
-                        <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
+                <div class="order-filter-group">
+                    <label for="order">Order</label>
+                    <select name="order" id="order" class="crud-select" onchange="this.form.submit()">
                         <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
+                        <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
                     </select>
                 </div>
             </form>

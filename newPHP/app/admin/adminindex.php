@@ -309,7 +309,11 @@ $displayName = getDisplayName();
                 </div>
                 <div class="admin-dashboard-info">
                     <h3>Pending Orders</h3>
-                    <p><?php echo getPendingOrders(); ?></p>
+                    <?php
+                    $pendingOrders = getPendingOrders($pdo);
+                    if (count($pendingOrders) > 0): ?>
+                    <p><?php echo count($pendingOrders); ?></p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -320,7 +324,7 @@ $displayName = getDisplayName();
                 </div>
                 <div class="admin-dashboard-info">
                     <h3>Total Sales</h3>
-                    <p>RM <?php echo number_format(getTotalSales(), 2); ?></p>
+                    <p>RM <?php echo number_format(getTotalSales($pdo), 2); ?></p>
                 </div>
             </div>
             <?php endif; ?>

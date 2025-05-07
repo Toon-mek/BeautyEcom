@@ -11,11 +11,11 @@ handleDeleteMember();
 handleEditMember();
 
 // Allowed sort columns and directions
-$allowedSort = ['MemberID', 'Name', 'Email', 'CreatedAt'];
+$allowedSort = ['MemberID', 'Name', 'Email', 'PhoneNumber', 'MembershipStatus', 'CreatedAt'];
 $allowedDir  = ['asc', 'desc'];
 
-$sort         = $_GET['sort'] ?? 'CreatedAt';
-$dir          = $_GET['order'] ?? 'desc';
+$sort         = $_GET['sort'] ?? 'MemberID';
+$dir          = $_GET['order'] ?? 'asc';
 $search       = $_GET['search'] ?? '';
 $statusFilter = $_GET['status_filter'] ?? '';
 $page         = max(1, (int) ($_GET['page'] ?? 1));
@@ -24,11 +24,11 @@ $offset       = ($page - 1) * $perPage;
 
 // Validate sort and order
 if (! in_array($sort, $allowedSort)) {
-    $sort = 'CreatedAt';
+    $sort = 'MemberID';
 }
 
 if (! in_array(strtolower($dir), $allowedDir)) {
-    $dir = 'desc';
+    $dir = 'asc';
 }
 
 // Build WHERE clause
@@ -73,8 +73,8 @@ $members = $stmt->fetchAll();
 // Sorting link helper
 function buildSortLink($column, $label)
 {
-    $currentSort = $_GET['sort'] ?? 'CreatedAt';
-    $currentDir  = $_GET['order'] ?? 'desc';
+    $currentSort = $_GET['sort'] ?? 'MemberID';
+    $currentDir  = $_GET['order'] ?? 'asc';
     $nextDir     = ($currentSort === $column && $currentDir === 'asc') ? 'desc' : 'asc';
     $arrow       = ($currentSort === $column) ? ($currentDir === 'asc' ? '↑' : '↓') : '';
     return "<a href='?sort=$column&order=$nextDir'>" . htmlspecialchars($label) . " $arrow</a>";
@@ -110,19 +110,20 @@ function buildSortLink($column, $label)
                 </div>
                 <div class="filter-group" style="display: flex; flex-direction: column;">
                     <label for="sort" style="margin-bottom: 5px;">Sort By</label>
-                    <select name="sort" id="sort" class="crud-select">
+                    <select name="sort" id="sort" class="crud-select" onchange="this.form.submit()">
                         <option value="MemberID" <?php echo ($sort === 'MemberID') ? 'selected' : ''; ?>>ID</option>
-                        <option value="Username" <?php echo ($sort === 'Username') ? 'selected' : ''; ?>>Username</option>
+                        <option value="Name" <?php echo ($sort === 'Name') ? 'selected' : ''; ?>>Name</option>
                         <option value="Email" <?php echo ($sort === 'Email') ? 'selected' : ''; ?>>Email</option>
-                        <option value="Phone" <?php echo ($sort === 'Phone') ? 'selected' : ''; ?>>Phone</option>
-                        <option value="Address" <?php echo ($sort === 'Address') ? 'selected' : ''; ?>>Address</option>
+                        <option value="PhoneNumber" <?php echo ($sort === 'PhoneNumber') ? 'selected' : ''; ?>>Phone</option>
+                        <option value="MembershipStatus" <?php echo ($sort === 'MembershipStatus') ? 'selected' : ''; ?>>Status</option>
+                        <option value="CreatedAt" <?php echo ($sort === 'CreatedAt') ? 'selected' : ''; ?>>Joined</option>
                     </select>
                 </div>
-                <div class="filter-group" style="display: flex; flex-direction: column;">
-                    <label for="order" style="margin-bottom: 5px;">Order</label>
-                    <select name="order" id="order" class="crud-select">
-                        <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
+                <div class="order-filter-group">
+                    <label for="order">Order</label>
+                    <select name="order" id="order" class="crud-select" onchange="this.form.submit()">
                         <option value="asc" <?php echo ($dir === 'asc') ? 'selected' : ''; ?>>Ascending</option>
+                        <option value="desc" <?php echo ($dir === 'desc') ? 'selected' : ''; ?>>Descending</option>
                     </select>
                 </div>
             </form>
