@@ -56,7 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
             <h1>Thank You for Your Order!</h1>
             <p class="lead">Your order has been placed successfully.</p>
         </div>
-
         <div class="order-details-grid">
             <div class="order-details-column">
                 <div class="card">
@@ -67,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
                         <p><strong>Status:</strong> <span class="badge bg-success"><?php echo $order['OrderStatus']; ?></span></p>
                     </div>
                 </div>
-
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Customer Information</h5>
@@ -77,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
                     </div>
                 </div>
             </div>
-
             <div class="order-details-column">
                 <div class="card">
                     <div class="card-body">
@@ -121,7 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
                         </div>
                     </div>
                 </div>
-
                 <!-- Payment Information Card -->
                 <div class="card">
                     <div class="card-body">
