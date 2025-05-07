@@ -5,10 +5,14 @@ handleCartActions($pdo);
 $payment_method = $_POST['payment_method'] ?? $_POST['selected_payment_method'] ?? 'Cash on Delivery';
 $_SESSION['last_payment_method'] = $payment_method; // Store in session for later use
 $order_id = $_GET['order_id'] ?? null;
+
 // Redirect if the order is invalid
 $order = redirectIfInvalidOrder($pdo, $order_id);
 // Retrieve the order details from the database
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE OrderID = ?");
+$stmt = $pdo->prepare("SELECT o.*, m.Name, m.Email, m.PhoneNumber 
+                      FROM orders o
+                      LEFT JOIN member m ON o.MemberID = m.MemberID
+                      WHERE o.OrderID = ?");
 $stmt->execute([$order_id]);
 $order = $stmt->fetch();
 // Fetch order items for this order
@@ -23,7 +27,7 @@ echo "<!-- Items count: " . count($order_items) . " -->\n";
 foreach ($order_items as $idx => $item) {
     echo "<!-- Item #{$idx}: " . 
          htmlspecialchars($item['ProductName']) . 
-         " (ID: " . $item['ProductID'] . ") - " .
+         " (ID: " . $item['ProductID'] . ") - " . 
          "Qty: " . ($item['OrderItemQTY'] ?? $item['Quantity']) . 
          " -->\n";
 }

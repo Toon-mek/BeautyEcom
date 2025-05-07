@@ -45,6 +45,7 @@ if (!file_exists($uploadsDir)) {
                             <div class="dropdown-content">
                                 <a href="/newPHP/app/member/settings.php">Settings</a>
                                 <a href="/newPHP/app/auth/logout.php">Logout</a>
+                                <a href="/../order/member_order.php">Order History</a>
                             </div>
                         </li>
                     <?php else: ?>
