@@ -560,7 +560,7 @@ function getPendingOrders($pdo) {
 
 function getTotalSales($pdo)
 {
-    $result = $pdo->query("SELECT COALESCE(SUM(AmountPaid), 0) FROM payment WHERE PaymentStatus = 'Paid'")->fetchColumn();
+    $result = $pdo->query("SELECT COALESCE(SUM(AmountPaid), 0) FROM payment WHERE PaymentStatus = 'Pending'")->fetchColumn();
     return $result;
 }
 
