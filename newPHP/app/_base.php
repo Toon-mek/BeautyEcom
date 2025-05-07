@@ -1043,4 +1043,20 @@ function getVoucherById($id)
     return $stmt->fetch();
 }
 
+// ------------------------------
+// 👤 Member Profile Photo
+// ------------------------------
+function getMemberProfilePhoto($memberId) {
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT ProfilePhoto FROM member WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+        $photo = $stmt->fetchColumn();
+        return !empty($photo) ? $photo : 'default-profile.png';
+    } catch (PDOException $e) {
+        error_log("Get Profile Photo Error: " . $e->getMessage());
+        return 'default-profile.png';
+    }
+}
+
 ?>

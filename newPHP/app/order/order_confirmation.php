@@ -9,24 +9,26 @@ $_SESSION['last_payment_method'] = $payment_method; // Store in session for late
 
 $order_id = $_GET['order_id'] ?? null;
 
-?>
-<script>
-    // Debug information in browser console
-    console.log("Payment Method POST: <?= addslashes($_POST['payment_method'] ?? 'Not set') ?>");
-    console.log("Selected Payment Method: <?= addslashes($_POST['selected_payment_method'] ?? 'Not set') ?>");
-    console.log("Final payment method selected: <?= addslashes($payment_method) ?>");
-</script>
-<?php
-
 // Redirect if the order is invalid
 $order = redirectIfInvalidOrder($pdo, $order_id);
 
 // Retrieve the order details from the database
-$stmt = $pdo->prepare("SELECT * FROM orders WHERE OrderID = ?");
+$stmt = $pdo->prepare("SELECT o.*, m.Name, m.Email, m.PhoneNumber 
+                      FROM orders o
+                      LEFT JOIN member m ON o.MemberID = m.MemberID
+                      WHERE o.OrderID = ?");
 $stmt->execute([$order_id]);
 $order = $stmt->fetch();
 
-// Better debugging approach
+// Fetch order items
+$stmt_items = $pdo->prepare("SELECT oi.*, p.ProductName, p.ProdIMG1, p.Price 
+                            FROM orderitem oi 
+                            LEFT JOIN product p ON oi.ProductID = p.ProductID
+                            WHERE oi.OrderID = ?");
+$stmt_items->execute([$order_id]);
+$order_items = $stmt_items->fetchAll();
+
+// Debugging the order items
 echo "<!-- DEBUG ORDER ITEMS: Order ID: {$order_id} -->\n";
 echo "<!-- Items count: " . count($order_items) . " -->\n";
 
@@ -34,7 +36,7 @@ echo "<!-- Items count: " . count($order_items) . " -->\n";
 foreach ($order_items as $idx => $item) {
     echo "<!-- Item #{$idx}: " . 
          htmlspecialchars($item['ProductName']) . 
-         " (ID: " . $item['ProductID'] . ") - " .
+         " (ID: " . $item['ProductID'] . ") - " . 
          "Qty: " . ($item['OrderItemQTY'] ?? $item['Quantity']) . 
          " -->\n";
 }
@@ -75,9 +77,9 @@ $payment = getPaymentDetails($pdo, $order_id, $payment_method);
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Customer Information</h5>
-                        <p><strong>Name:</strong> <?php echo htmlspecialchars($order['Name']); ?></p>
-                        <p><strong>Email:</strong> <?php echo htmlspecialchars($order['Email']); ?></p>
-                        <p><strong>Phone:</strong> <?php echo htmlspecialchars($order['PhoneNumber']); ?></p>
+                        <p><strong>Name:</strong> <?php echo isset($order['Name']) ? htmlspecialchars($order['Name']) : 'Guest'; ?></p>
+                        <p><strong>Email:</strong> <?php echo isset($order['Email']) ? htmlspecialchars($order['Email']) : 'N/A'; ?></p>
+                        <p><strong>Phone:</strong> <?php echo isset($order['PhoneNumber']) ? htmlspecialchars($order['PhoneNumber']) : 'N/A'; ?></p>
                     </div>
                 </div>
             </div>
@@ -122,7 +124,7 @@ $payment = getPaymentDetails($pdo, $order_id, $payment_method);
                     <div class="card-body">
                         <h5 class="card-title">Payment Information</h5>
                         <p><strong>Payment Method:</strong> <?php echo htmlspecialchars($payment['PaymentMethod']); ?></p>
-                        <p><strong>Payment Status:</strong> <span class="badge bg-success"><?php echo $payment['PaymentStatus']; ?></span></p>
+                        <p><strong>Payment Status:</strong> <spans class="badge bg-success"><?php echo $payment['PaymentStatus']; ?></span></p>
                         <p><strong>Amount Paid:</strong> RM <?php echo number_format($payment['AmountPaid'], 2); ?></p>
                     </div>
                 </div>
