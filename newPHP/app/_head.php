@@ -25,6 +25,7 @@ if (!file_exists($uploadsDir)) {
                     <li><a href="/newPHP/app/index.php" class="nav-link">Home</a></li>
                     <li><a href="/newPHP/app/product/all_product.php" class="nav-link">Products</a></li>
                     <li><a href="/newPHP/app/order/cart.php" class="nav-link">Cart</a></li>
+                    <li><a href="/newPHP/app/product/vouchers.php" class="nav-link">Vouchers</a></li>
                     <?php if (isLoggedIn()): ?>
                         <li class="profile-dropdown">
                             <?php

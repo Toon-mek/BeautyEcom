@@ -156,3 +156,9 @@ document.addEventListener('DOMContentLoaded', function () {
     updateCheckoutButton();
     updateSelectAllCheckbox();
 });
+
+function removeCartItem(cartItemId) {
+    // Set the id in the hidden form and submit
+    document.getElementById('remove_item_id').value = cartItemId;
+    document.getElementById('removeItemForm').submit();
+}
