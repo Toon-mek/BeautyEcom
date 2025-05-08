@@ -2,6 +2,61 @@
 require_once __DIR__ . '/../_base.php';
 handleCartActions($pdo);
 
+// Initialize cart_items to avoid undefined variable error
+$cart_items = [];
+
+// If we're processing a new order (POST data available)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_items'])) {
+    $selected_ids = array_map('intval', $_POST['selected_items']);
+    if (!empty($selected_ids)) {
+        $placeholders = rtrim(str_repeat('?,', count($selected_ids)), ',');
+        $stmt = $pdo->prepare("
+            SELECT ci.*, p.ProductName, p.Price, p.ProdIMG1 
+            FROM cartitem ci 
+            JOIN product p ON ci.ProductID = p.ProductID 
+            JOIN cart c ON ci.CartID = c.CartID 
+            WHERE ci.CartItemID IN ($placeholders) 
+            AND c.MemberID = ? AND c.CartStatus = 'Active'
+        ");
+        $stmt->execute([...$selected_ids, $_SESSION['member_id']]);
+        $cart_items = $stmt->fetchAll();
+    }
+}
+
+// If viewing an existing order, use order_items instead
+if (empty($cart_items) && isset($_GET['order_id'])) {
+    $order_id = $_GET['order_id'];
+    $order_items = getOrderItems($pdo, $order_id);
+    if (is_array($order_items) && !empty($order_items)) {
+        $cart_items = $order_items;
+    }
+}
+
+// Process voucher discount if available
+$voucherId = $_POST['voucher_id'] ?? null;
+$voucherDiscount = isset($_POST['voucher_discount']) ? floatval($_POST['voucher_discount']) : 0;
+$voucherCode = $_POST['voucher_code'] ?? null;
+
+// Calculate subtotal from cart items
+$subtotal = 0;
+foreach ($cart_items as $item) {
+    $subtotal += $item['Price'] * $item['Quantity'];
+}
+
+// Apply voucher discount if available
+$discountAmount = 0;
+if ($voucherDiscount > 0) {
+    $discountAmount = $subtotal * ($voucherDiscount / 100);
+    // Store the original subtotal for display purposes
+    $originalSubtotal = $subtotal;
+    // Apply discount to subtotal
+    $subtotal = $subtotal - $discountAmount;
+}
+
+// Add shipping fee
+$shippingFee = isset($_POST['shipping_fee']) ? floatval($_POST['shipping_fee']) : 0;
+$totalAmount = $subtotal + $shippingFee;
+
 // Handle order cancellation
 if (isset($_POST['cancel_order']) && isset($_POST['order_id'])) {
     $order_id_to_cancel = $_POST['order_id'];
@@ -163,6 +218,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
                             <span>Shipping Fee</span>
                             <span>RM <?php echo number_format($order['ShippingFee'] ?? 0, 2); ?></span>
                         </div>
+                        <?php if ($voucherDiscount > 0): ?>
+                            <div class="d-flex justify-content-between">
+                                <span>Voucher Discount (<?php echo $voucherDiscount; ?>%)</span>
+                                <span>-RM <?php echo number_format($discountAmount ?? 0, 2); ?></span>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="d-flex justify-content-between">
                             <strong>Total</strong>
                             <strong>RM <?php echo number_format($order['OrderTotalAmount'], 2); ?></strong>

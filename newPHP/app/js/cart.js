@@ -53,18 +53,23 @@ function updateSelectAllCheckbox() {
 function updateSelectedTotal() {
     const selectedItems = document.querySelectorAll('.item-checkbox:checked');
     let selectedTotal = 0;
+    let selectedCount = 0;
 
     selectedItems.forEach(checkbox => {
         selectedTotal += parseFloat(checkbox.dataset.price);
+        // Calculate actual item count based on quantity
+        const cartItem = checkbox.closest('.cart-item');
+        const quantityInput = cartItem.querySelector('input[type="number"]');
+        const itemQuantity = quantityInput ? parseInt(quantityInput.value) : 1;
+        selectedCount += itemQuantity;
     });
 
     document.getElementById('subtotal').textContent = `RM ${selectedTotal.toFixed(2)}`;
     document.getElementById('total').textContent = `RM ${selectedTotal.toFixed(2)}`;
-    document.getElementById('summarySelectedCount').textContent = selectedItems.length;
+    
+    // Update with actual item count including quantities
+    document.getElementById('summarySelectedCount').textContent = selectedCount;
     document.getElementById('headerSelectedCount').textContent = selectedItems.length;
-
-    const selectedCountElements = document.querySelectorAll('.selectedCount');
-    selectedCountElements.forEach(el => el.textContent = selectedItems.length);
 }
 
 // ✅ Show or hide checkout button
