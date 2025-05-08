@@ -482,53 +482,70 @@ function requireAdminPage() {
     require_once __DIR__ . '/../_base.php';
     requireLogin('staff');
 }
-function handleStaffLogin($pdo) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $username = $_POST['username'];
-        $password = $_POST['password'];
+function handleStaffLogin(PDO $pdo)
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
-        // First check staff table
+    $username = trim($_POST['username']);
+    $password = $_POST['password'];
+
+    try {
+        // 🔍 1. Check staff table
         $stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
         $stmt->execute([$username]);
-        $user = $stmt->fetch();
+        $staff = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$user) {
-            // If not found in staff table, check manager table
-            $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch();
-            
-            if ($user && password_verify($password, $user['Password'])) {
-                $_SESSION['staff_id'] = $user['ManagerUsername'];
-                $_SESSION['staff_name'] = $user['ManagerName'] ?? $user['ManagerUsername'];
-                $_SESSION['is_manager'] = true;
-                header("Location: ../admin/adminindex.php");
-                exit();
-            }
-        } else if ($user && password_verify($password, $user['Password'])) {
-            if ($user['StaffStatus'] === 'Inactive') {
-                $_SESSION['staff_login_error'] = "Your account is inactive. Please contact admin.";
+        if ($staff) {
+            // 🛡️ Block inactive accounts
+            if ($staff['StaffStatus'] === 'Inactive') {
+                $_SESSION['staff_login_error'] = "Your staff account is inactive. Please contact admin.";
                 header("Location: staffLogin.php");
                 exit();
             }
 
-            $_SESSION['staff_id'] = $user['StaffUsername'];
-            $_SESSION['staff_name'] = $user['StaffName'] ?? $user['StaffUsername'];
-            $_SESSION['is_manager'] = false;
+            // 🔐 Verify password
+            if (password_verify($password, $staff['Password'])) {
+                $_SESSION['staff_id'] = $staff['StaffUsername'];
+                $_SESSION['staff_name'] = $staff['StaffName'] ?? $staff['StaffUsername'];
+                $_SESSION['is_manager'] = false;
 
-            if (!empty($user['FirstTimeLogin'])) {
-                header("Location: ../auth/staffSetup.php");
-            } else {
-                header("Location: ../admin/adminindex.php");
+                // 🔁 First-time setup redirect
+                if (!empty($staff['FirstTimeLogin'])) {
+                    header("Location: ../auth/staffSetup.php");
+                } else {
+                    header("Location: ../admin/adminindex.php");
+                }
+                exit();
             }
+        }
+
+        // 🔍 2. Check manager table if not found in staff
+        $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
+        $stmt->execute([$username]);
+        $manager = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($manager && password_verify($password, $manager['Password'])) {
+            $_SESSION['staff_id'] = $manager['ManagerUsername'];
+            $_SESSION['staff_name'] = $manager['ManagerName'] ?? $manager['ManagerUsername'];
+            $_SESSION['is_manager'] = true;
+
+            header("Location: ../admin/adminindex.php");
             exit();
         }
-        
+
+        // ❌ Invalid credentials fallback
         $_SESSION['staff_login_error'] = "Invalid username or password.";
+        header("Location: staffLogin.php");
+        exit();
+
+    } catch (PDOException $e) {
+        error_log("Staff login error: " . $e->getMessage());
+        $_SESSION['staff_login_error'] = "Login system error. Contact admin.";
         header("Location: staffLogin.php");
         exit();
     }
 }
+
 
 function isManager($staff_id)
 {
@@ -537,7 +554,6 @@ function isManager($staff_id)
     $stmt->execute([$staff_id]);
     return $stmt->fetch() ? true : false;
 }
-
 function getDisplayName()
 {
     return $_SESSION['staff_name'] ?? $_SESSION['staff_id'] ?? 'Admin';
@@ -569,7 +585,6 @@ function getPendingOrders($pdo) {
     $stmt->execute();
     return $stmt->fetchAll();
 }
-
 function getTotalSales($pdo)
 {
     $result = $pdo->query("SELECT COALESCE(SUM(OrderTotalAmount), 0) FROM orders WHERE OrderStatus = 'Completed'")->fetchColumn();
@@ -600,7 +615,6 @@ function deleteMember($id)
     $stmt = $pdo->prepare("DELETE FROM member WHERE MemberID = ?");
     $stmt->execute([$id]);
 }
-
 function editMember($data, $profilePhoto)
 {
     global $pdo;

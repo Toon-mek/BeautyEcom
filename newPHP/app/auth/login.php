@@ -10,23 +10,42 @@ if (isset($_GET['registered']) && $_GET['registered'] == 1) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
-
-    $stmt = $pdo->prepare("SELECT * FROM member WHERE Email = ? LIMIT 1");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($password, $user['Password'])) {
-        if ($user['MembershipStatus'] !== 'Active') {
-            $error = "Your account has been blocked. Please contact our customer service.";
-        } else {
-            $_SESSION['user_id'] = $user['MemberID'];
-            $_SESSION['user_role'] = 'member';
-            $_SESSION['member_id'] = $user['MemberID'];
-            header("Location: ../index.php");
-            exit();
-        }
+    // Track failed attempts and cooldown in session
+    if (!isset($_SESSION['login_attempts'])) {
+        $_SESSION['login_attempts'] = [];
+    }
+    $now = time();
+    $attempts = &$_SESSION['login_attempts'];
+    if (!isset($attempts[$email])) {
+        $attempts[$email] = ['count' => 0, 'blocked_until' => 0];
+    }
+    if ($now < $attempts[$email]['blocked_until']) {
+        $error = "Too many failed attempts. Please wait 20 seconds before trying again.";
     } else {
-        $error = "Invalid email or password";
+        $stmt = $pdo->prepare("SELECT * FROM member WHERE Email = ? LIMIT 1");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        if ($user && password_verify($password, $user['Password'])) {
+            if ($user['MembershipStatus'] !== 'Active') {
+                $error = "Your account has been blocked. Please contact our customer service.";
+            } else {
+                $_SESSION['user_id'] = $user['MemberID'];
+                $_SESSION['user_role'] = 'member';
+                $_SESSION['member_id'] = $user['MemberID'];
+                // Reset attempts on successful login
+                $attempts[$email] = ['count' => 0, 'blocked_until' => 0];
+                header("Location: ../index.php");
+                exit();
+            }
+        } else {
+            $attempts[$email]['count']++;
+            if ($attempts[$email]['count'] >= 3) {
+                $attempts[$email]['blocked_until'] = $now + 20;
+                $error = "Too many failed attempts. Please wait 20 seconds to try again.";
+            } else {
+                $error = "Invalid email or password";
+            }
+        }
     }
 }
 ?>
@@ -85,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </button>
 
         <h2 class="text-center mb-4">Login</h2>
-
         <?php if ($successMsg): ?>
             <div class="alert-box alert-success"><?= htmlspecialchars(string: $successMsg) ?></div>
         <?php endif; ?>
@@ -102,7 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-input" id="password" name="password" required />
+                <div style="position:relative;">
+                    <input type="password" class="form-input" id="password" name="password" required />
+                    <button type="button" id="togglePassword" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer;">
+                        <span id="togglePasswordIcon">👁️</span>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
             <div class="g-recaptcha" data-sitekey="6LetwzIrAAAAAJkfAxhzNQzSwtDDrZHuINFvpzC1"></div>
@@ -118,6 +141,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>Don't have an account? <a href="register.php">Register here</a></p>
         </div>
     </div>
+    <script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordInput = document.getElementById('password');
+        const icon = document.getElementById('togglePasswordIcon');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            icon.textContent = '👁️';
+        }
+    });
+    </script>
 </body>
 
 </html>

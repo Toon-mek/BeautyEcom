@@ -11,8 +11,8 @@ $error = handleStaffLogin($pdo);
     <title>Staff Login - Beauty & Wellness</title>
     <link href="../css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
-
 <body>
     <a href="../index.php" class="logo-link">
         <img src="../backgroundimg/Logo.png" alt="Beauty & Wellness Logo">
@@ -38,7 +38,15 @@ $error = handleStaffLogin($pdo);
             </div>
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-input" id="password" name="password" required>
+                <div style="position:relative;">
+                    <input type="password" class="form-input" id="password" name="password" required>
+                    <button type="button" id="togglePassword" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer;">
+                        <span id="togglePasswordIcon">👁️</span>
+                    </button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="g-recaptcha" data-sitekey="6LetwzIrAAAAAJkfAxhzNQzSwtDDrZHuINFvpzC1"></div>
             </div>
             <div class="form-group text-left">
                 <a href="#" onclick="showForgotMessage()" class="forgot-password-link">Forgot Password?</a>
@@ -49,5 +57,19 @@ $error = handleStaffLogin($pdo);
         </form>
     </div>
 </body>
+
 </html>
 <script src="../js/staffLogin.js"></script>
+<script>
+document.getElementById('togglePassword').addEventListener('click', function () {
+    const passwordInput = document.getElementById('password');
+    const icon = document.getElementById('togglePasswordIcon');
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        passwordInput.type = 'password';
+        icon.textContent = '👁️';
+    }
+});
+</script>
