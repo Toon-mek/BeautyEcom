@@ -84,7 +84,6 @@ $total = calculateCartTotal($cart_items);
                                         data-price="<?php echo $item['Price'] * $item['Quantity']; ?>"
                                         data-quantity="<?php echo $item['Quantity']; ?>">
 
-
                                     <?php if (!empty($item['ProdIMG1']) && file_exists("../uploads/" . $item['ProdIMG1'])): ?>
                                         <img src="../uploads/<?php echo htmlspecialchars($item['ProdIMG1']); ?>"
                                             class="product-image"
@@ -123,18 +122,14 @@ $total = calculateCartTotal($cart_items);
                                             <i class="fas fa-plus"></i>
                                         </button>
                                     </div>
-
-                                    <div class="item-total">
-                                        <p class="item-total-price">
-                                            RM <?php echo number_format($item['Price'] * $item['Quantity'], 2); ?>
-                                        </p>
-                                        <button type="submit"
-                                            name="remove_item"
-                                            value="<?php echo $item['CartItemID']; ?>"
-                                            class="remove-item">
-                                            <i class="fas fa-trash"></i> Remove
-                                        </button>
-                                    </div>
+                                        <div class="item-total">
+                                            <p class="item-total-price">
+                                                RM <?php echo number_format($item['Price'] * $item['Quantity'], 2); ?>
+                                            </p>
+                                            <button type="button" class="remove-item" onclick="removeCartItem(<?php echo $item['CartItemID']; ?>)">
+                                                <i class="fas fa-trash"></i> Remove
+                                            </button>
+                                        </div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -177,6 +172,10 @@ $total = calculateCartTotal($cart_items);
             </div>
         <?php endif; ?>
     </div>
+
+    <form id="removeItemForm" method="POST" action="cart.php" style="display: none">
+        <input type="hidden" name="remove_item" id="remove_item_id" value="">
+    </form>
 
     <script src="../js/cart.js"></script>
     <?php require_once __DIR__ . '/../_foot.php'; ?>

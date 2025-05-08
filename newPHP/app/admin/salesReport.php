@@ -64,6 +64,7 @@ $stmt = $pdo->prepare("
     AND o.OrderDate BETWEEN ? AND ?
     GROUP BY c.CategoryID
     ORDER BY total_revenue DESC
+    LIMIT 3
 ");
 $stmt->execute([$start_date, $end_date]);
 $sales_by_category = $stmt->fetchAll();
@@ -235,7 +236,7 @@ $payment_distribution = $stmt->fetchAll();
                         </div>
                         <div class="sales-stat-card">
                             <h3>Average Order Value</h3>
-                            <div class="value">RM <?php echo count($sales_by_date) > 0 ? number_format($total_sales / count($sales_by_date), 2) : '0.00'; ?></div>
+                            <div class="value">RM <?php echo $total_orders > 0 ? number_format($total_sales / $total_orders, 2) : '0.00'; ?></div>
                         </div>
                     </div>
                     <div class="sales-section">

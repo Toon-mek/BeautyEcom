@@ -3114,3 +3114,148 @@ body {
     font-size: 0.9rem;
     margin-top: 5px;
 }
+
+.discount-row {
+    color: #e74c3c;
+    font-weight: 500;
+    margin: 5px 0;
+}
+
+.discount-row span:last-child {
+    color: #e74c3c;
+}
+
+/* Vouchers page styles */
+.vouchers-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 20px;
+}
+
+.vouchers-container h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.voucher-intro {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.voucher-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.voucher-card {
+    border: 2px dashed #d38db2;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.voucher-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.voucher-content {
+    padding: 20px;
+}
+
+.voucher-info {
+    margin-bottom: 15px;
+}
+
+.voucher-info h2 {
+    color: #d38db2;
+    font-size: 28px;
+    margin: 0 0 10px;
+}
+
+.voucher-description {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.voucher-expiry {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.voucher-code-container {
+    display: flex;
+    align-items: center;
+    background: #f8f4f7;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.voucher-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    letter-spacing: 1px;
+    flex-grow: 1;
+    padding: 5px 10px;
+}
+
+.copy-btn {
+    background: #d38db2;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s ease;
+}
+
+.copy-btn:hover {
+    background: #c37ca1;
+}
+
+.copy-btn.copied {
+    background: #5cb85c;
+}
+
+.no-vouchers {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+}
+
+.no-vouchers i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #ddd;
+}
+
+.no-vouchers h2 {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+/* Add responsive adjustments */
+@media (max-width: 768px) {
+    .voucher-list {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .voucher-code {
+        font-size: 14px;
+    }
+    
+    .voucher-info h2 {
+        font-size: 24px;
+    }
+}

@@ -218,12 +218,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
                             <span>Shipping Fee</span>
                             <span>RM <?php echo number_format($order['ShippingFee'] ?? 0, 2); ?></span>
                         </div>
-                        <?php if ($voucherDiscount > 0): ?>
-                            <div class="d-flex justify-content-between">
-                                <span>Voucher Discount (<?php echo $voucherDiscount; ?>%)</span>
-                                <span>-RM <?php echo number_format($discountAmount ?? 0, 2); ?></span>
-                            </div>
-                        <?php endif; ?>
+                        <?php 
+                        // Get voucher discount from order if it exists
+                        $voucherDiscount = 0;
+                        $discountAmount = 0;
+
+                        // Check if there's a voucher applied to this order
+                        if (isset($order['VoucherID']) && !empty($order['VoucherID'])) {
+                            $voucherStmt = $pdo->prepare("SELECT Discount FROM voucher WHERE VoucherID = ?");
+                            $voucherStmt->execute([$order['VoucherID']]);
+                            $voucherData = $voucherStmt->fetch();
+                            
+                            if ($voucherData) {
+                                $voucherDiscount = $voucherData['Discount'];
+                                // Correctly calculate the discount amount based on subtotal
+                                $discountAmount = $subtotal * ($voucherDiscount / 100);
+                            }
+                        }
+
+                        // If we have POST data with voucher info, use that instead
+                        if (isset($_POST['voucher_discount']) && floatval($_POST['voucher_discount']) > 0) {
+                            $voucherDiscount = floatval($_POST['voucher_discount']);
+                            // Calculate discount amount directly from subtotal for POST context
+                            $discountAmount = $subtotal * ($voucherDiscount / 100);
+                        }
+                        ?>
+                        <!-- Always display discount row, but show 0.00 if no discount -->
+                        <div class="d-flex justify-content-between <?php echo $voucherDiscount > 0 ? 'discount-row' : ''; ?>">
+                            <span>Discount</span>
+                            <span><?php echo $voucherDiscount > 0 ? '-' : ''; ?>RM <?php echo number_format($discountAmount, 2); ?></span>
+                        </div>
 
                         <div class="d-flex justify-content-between">
                             <strong>Total</strong>
