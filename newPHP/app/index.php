@@ -513,34 +513,5 @@ function getLowStockProducts($pdo) {
     return $stmt->fetchAll();
 }
 ?>
-<div class="inventory-section">
-    <h2 class="inventory-section-header">Low Stock Alert</h2>
-    <table class="inventory-table">
-        <thead>
-            <tr>
-                <th>Product ID</th>
-                <th>Category</th>
-                <th>Product Name</th>
-                <th>Current Stock</th>
-                <th>Price</th>
-                <th>Stock Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($lowStockProducts as $product): ?>
-                <tr>
-                    <td><?php echo $product['ProductID']; ?></td>
-                    <td><?php echo htmlspecialchars($product['CategoryName']); ?></td>
-                    <td><?php echo htmlspecialchars($product['ProductName']); ?></td>
-                    <td><?php echo $product['Quantity']; ?></td>
-                    <td>RM <?php echo number_format($product['Price'], 2); ?></td>
-                    <td>RM <?php echo number_format($product['Price'] * $product['Quantity'], 2); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-</div>
-<div class="low-stock-warning-icon">
-    <i class="fas fa-exclamation-triangle"></i>
-</div>
+
 <?php require_once __DIR__ . '/_foot.php'; ?>
