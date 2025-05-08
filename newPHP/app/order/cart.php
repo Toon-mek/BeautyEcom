@@ -81,7 +81,8 @@ $total = calculateCartTotal($cart_items);
                                         name="selected_items[]"
                                         value="<?php echo $item['CartItemID']; ?>"
                                         class="item-checkbox"
-                                        data-price="<?php echo $item['Price'] * $item['Quantity']; ?>">
+                                        data-price="<?php echo $item['Price'] * $item['Quantity']; ?>"
+                                        data-quantity="<?php echo $item['Quantity']; ?>">
 
 
                                     <?php if (!empty($item['ProdIMG1']) && file_exists("../uploads/" . $item['ProdIMG1'])): ?>

@@ -823,7 +823,7 @@ function createOrderPayment($order_id, $payment_method)
             
             // Create payment record
             $stmt = $pdo->prepare("INSERT INTO payment (OrderID, PaymentDate, PaymentMethod, AmountPaid, PaymentStatus) 
-                                  VALUES (?, NOW(), ?, ?, 'Paid')");
+                                  VALUES (?, NOW(), ?, ?, 'Pending')");
             $stmt->execute([$order_id, $payment_method, $orderTotal]);
             
             return $pdo->lastInsertId();

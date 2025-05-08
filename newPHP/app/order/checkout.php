@@ -12,7 +12,7 @@ if (empty($selected_ids)) {
 $selected_ids = array_map('intval', $selected_ids); // sanitize
 $placeholders = rtrim(str_repeat('?,', count($selected_ids)), ',');
 $stmt = $pdo->prepare("
-    SELECT ci.*, p.ProductName, p.Price, p.ProdIMG1 
+    SELECT ci.*, p.ProductName, p.Price, p.ProdIMG1, ci.Quantity 
     FROM cartitem ci 
     JOIN product p ON ci.ProductID = p.ProductID 
     JOIN cart c ON ci.CartID = c.CartID 
@@ -377,10 +377,14 @@ handleCartActions($pdo);
                     
                     if (selectedState === '') {
                         // Disable voucher section when no state is selected
-                        if (voucherInput && applyButton) {
+                        if (voucherInput) {
                             voucherInput.disabled = true;
+                        }
+                        if (applyButton) {
                             applyButton.disabled = true;
-                            if (disabledMessage) disabledMessage.style.display = 'block';
+                        }
+                        if (disabledMessage) {
+                            disabledMessage.style.display = 'block';
                         }
                         
                         // Hide shipping fee row
@@ -388,29 +392,19 @@ handleCartActions($pdo);
                         shippingFee = 0;
                     } else {
                         // Enable voucher section when state is selected
-                        if (voucherInput && !voucherInput.getAttribute('data-voucher-applied')) {
+                        if (voucherInput) {
                             voucherInput.disabled = false;
                         }
                         if (applyButton) {
                             applyButton.disabled = false;
                         }
-                        if (disabledMessage) disabledMessage.style.display = 'none';
+                        if (disabledMessage) {
+                            disabledMessage.style.display = 'none';
+                        }
                         
                         // Show shipping fee row
                         shippingFeeRow.style.display = 'flex';
                         
-                        // Your existing code for shipping fee calculation
-                    }
-
-                    // Check if state is empty
-                    if (selectedState === '') {
-                        // Hide shipping fee row
-                        shippingFeeRow.style.display = 'none';
-                        shippingFee = 0;
-                    } else {
-                        // Show shipping fee row
-                        shippingFeeRow.style.display = 'flex';
-
                         // Check if selected state is Sabah, Sarawak or Labuan
                         if (selectedState === 'Sabah' || selectedState === 'Sarawak' || selectedState === 'Labuan') {
                             shippingFee = 10; // Higher shipping fee for East Malaysia
@@ -423,14 +417,34 @@ handleCartActions($pdo);
                     // Update the hidden input
                     shippingFeeInput.value = shippingFee;
 
-                    // Update the total amount - INCLUDE VOUCHER DISCOUNT
-                    const voucherDiscount = <?php echo $voucher_discount ?: 0; ?>;
-                    const subtotal = cartTotal;
+                    // Check if a voucher is applied by looking for the discount row
+                    let voucherDiscount = 0;
+                    let discountRow = null;
+                    document.querySelectorAll('.order-summary-item').forEach(item => {
+                        if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                            discountRow = item;
+                            // Extract the discount percentage
+                            const discountText = item.querySelector('span:last-child').textContent;
+                            voucherDiscount = parseFloat(discountText.replace('-', '').replace('%', '')) || 0;
+                        }
+                    });
+
+                    // If no discount row found, check for hidden input
+                    if (!discountRow) {
+                        const voucherDiscountInput = document.querySelector('input[name="voucher_discount"]');
+                        if (voucherDiscountInput) {
+                            voucherDiscount = parseFloat(voucherDiscountInput.value) || 0;
+                        }
+                    }
+
+                    // Calculate final total with current voucher discount (if any)
+                    const subtotal = <?php echo $total; ?>;
                     const discountAmount = subtotal * (voucherDiscount / 100);
                     const newTotal = subtotal - discountAmount + shippingFee;
+                    
+                    console.log(`Recalculating total - Subtotal: ${subtotal}, Discount: ${voucherDiscount}%, Amount: ${discountAmount}, Shipping: ${shippingFee}, Total: ${newTotal}`);
+                    
                     totalAmountDisplay.textContent = `RM ${newTotal.toFixed(2)}`;
-
-                    console.log(`Shipping fee: RM ${shippingFee.toFixed(2)}, Discount: ${voucherDiscount}%, Final total: RM ${newTotal.toFixed(2)}`);
                 }
             }
         });
@@ -475,17 +489,23 @@ handleCartActions($pdo);
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 
-                // Get updated total
-                var newTotal = doc.getElementById('total-amount')?.textContent;
-                if (newTotal) {
-                    document.getElementById('total-amount').textContent = newTotal;
-                }
-                
-                // Get voucher message
+                // Check if there's an error message
                 const newMessage = doc.getElementById('voucher-message');
                 if (newMessage) {
                     messageDiv.className = newMessage.className;
                     messageDiv.innerHTML = newMessage.innerHTML;
+                    
+                    // If it's an error message, don't recalculate the total
+                    if (newMessage.className === 'voucher-error') {
+                        return;  // Exit early, don't calculate anything
+                    }
+                }
+                
+                // Continue with the rest of the code only if the voucher is valid
+                // Get updated total
+                var newTotal = doc.getElementById('total-amount')?.textContent;
+                if (newTotal) {
+                    document.getElementById('total-amount').textContent = newTotal;
                 }
                 
                 // Update voucher discount row - FIXED SELECTOR CODE
@@ -519,57 +539,32 @@ handleCartActions($pdo);
                 if (voucherFields.length > 0) {
                     // Add or update voucher fields
                     document.querySelectorAll('input[name^="voucher_"]').forEach(el => el.remove());
+                    
+                    let voucherDiscountValue = 0;
+                    
                     voucherFields.forEach(field => {
                         const input = document.createElement('input');
                         input.type = 'hidden';
                         input.name = field.name;
                         input.value = field.value;
                         document.querySelector('form').appendChild(input);
-                    });
-                    
-                    // Disable the voucher input and apply button - WITH NULL CHECKS
-                    const voucherInput = document.getElementById('voucher_code');
-                    const applyButton = document.getElementById('apply_voucher_btn');
-                    
-                    if (voucherInput) {
-                        voucherInput.disabled = true;
-                    }
-                    
-                    if (applyButton) {
-                        applyButton.disabled = true;
-                    }
-                } else {
-                    // Remove voucher fields if voucher is invalid
-                    document.querySelectorAll('input[name^="voucher_"]').forEach(el => el.remove());
-                }
-
-                // Manually recalculate the total in case the server response didn't include it
-                const currentShippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 5;
-                let discountApplied = false;
-
-                // Check if a discount row was found in the response
-                doc.querySelectorAll('.order-summary-item').forEach(item => {
-                    if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
-                        discountApplied = true;
-                    }
-                });
-
-                if (discountApplied) {
-                    // Extract the discount percentage from the response
-                    let discountPercent = 0;
-                    doc.querySelectorAll('.order-summary-item').forEach(item => {
-                        if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
-                            const discountText = item.querySelector('span:last-child').textContent;
-                            discountPercent = parseFloat(discountText.replace('-', '').replace('%', '')) || 0;
+                        
+                        // Get discount value for calculation
+                        if (field.name === 'voucher_discount') {
+                            voucherDiscountValue = parseFloat(field.value) || 0;
                         }
                     });
                     
-                    // Calculate the new total with discount
-                    const subtotal = <?php echo $total; ?>;
-                    const discountAmount = subtotal * (discountPercent / 100);
-                    const newTotal = subtotal - discountAmount + currentShippingFee;
-                    document.getElementById('total-amount').textContent = `RM ${newTotal.toFixed(2)}`;
-                    console.log(`Manual recalculation - Subtotal: ${subtotal}, Discount: ${discountPercent}%, Amount: ${discountAmount}, Shipping: ${currentShippingFee}, Total: ${newTotal}`);
+                    // Disable the voucher input and apply button
+                    const voucherInput = document.getElementById('voucher_code');
+                    const applyButton = document.getElementById('apply_voucher_btn');
+                    
+                    if (voucherInput) voucherInput.disabled = true;
+                    if (applyButton) applyButton.disabled = true;
+                    
+                    // Calculate new total with current shipping fee and valid voucher
+                    const currentShippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 0;
+                    calculateOrderTotal(currentShippingFee, voucherDiscountValue);
                 }
             })
             .catch(error => {
@@ -577,39 +572,8 @@ handleCartActions($pdo);
                 messageDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error checking voucher. Please try again.';
                 console.error('Error:', error);
                 
-                // Make sure input and button are enabled after error - WITH NULL CHECKS
-                const voucherInput = document.getElementById('voucher_code');
-                const applyButton = document.getElementById('apply_voucher_btn');
-                
-                if (voucherInput) {
-                    voucherInput.disabled = false;
-                }
-                
-                if (applyButton) {
-                    applyButton.disabled = false;
-                }
-                
-                // Keep the current shipping fee value
-                const currentShippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 5;
-                const shippingFeeInput = document.getElementById('shipping-fee-input');
-                const shippingFeeDisplay = document.getElementById('shipping-fee-display');
-                const totalAmountDisplay = document.getElementById('total-amount');
-                
-                if (shippingFeeInput) {
-                    shippingFeeInput.value = currentShippingFee;
-                }
-                
-                if (shippingFeeDisplay) {
-                    shippingFeeDisplay.textContent = `RM ${currentShippingFee.toFixed(2)}`;
-                }
-                
-                // Recalculate total with current shipping fee
-                const subtotal = <?php echo $total; ?>;
-                const newTotal = subtotal + currentShippingFee;
-                
-                if (totalAmountDisplay) {
-                    totalAmountDisplay.textContent = `RM ${newTotal.toFixed(2)}`;
-                }
+                // Don't recalculate the total when there's an error
+                // Just restore the previous total from before the voucher application attempt
             });
         }
 
@@ -668,6 +632,119 @@ handleCartActions($pdo);
                 applyButton.addEventListener('click', applyVoucherHandler);
             }
         });
+
+        function updateShippingFee() {
+            const selectedState = stateSelect.value;
+            let shippingFee = 5; // Default shipping fee
+        
+            // Enable or disable voucher section based on state selection
+            const voucherInput = document.getElementById('voucher_code');
+            const applyButton = document.getElementById('apply_voucher_btn');
+            const disabledMessage = document.getElementById('voucher-disabled-message');
+            
+            if (selectedState === '') {
+                // Disable voucher section when no state is selected
+                if (voucherInput) voucherInput.disabled = true;
+                if (applyButton) applyButton.disabled = true;
+                if (disabledMessage) disabledMessage.style.display = 'block';
+                
+                // Hide shipping fee row
+                shippingFeeRow.style.display = 'none';
+                shippingFee = 0;
+            } else {
+                // Enable voucher section when state is selected
+                if (voucherInput) voucherInput.disabled = false;
+                if (applyButton) applyButton.disabled = false;
+                if (disabledMessage) disabledMessage.style.display = 'none';
+                
+                // Show shipping fee row
+                shippingFeeRow.style.display = 'flex';
+                
+                // Check if selected state is Sabah, Sarawak or Labuan
+                if (selectedState === 'Sabah' || selectedState === 'Sarawak' || selectedState === 'Labuan') {
+                    shippingFee = 10; // Higher shipping fee for East Malaysia
+                }
+            }
+        
+            // Update the shipping fee display
+            shippingFeeDisplay.textContent = `RM ${shippingFee.toFixed(2)}`;
+            
+            // Update the hidden input
+            shippingFeeInput.value = shippingFee;
+            
+            // Always recalculate total with proper discount if voucher is applied
+            recalculateTotal(shippingFee);
+        }
+        
+        // Add a new function to handle total recalculation
+        function recalculateTotal(shippingFee) {
+            const subtotal = <?php echo $total; ?>;
+            let voucherDiscount = 0;
+            
+            // Check for voucher discount from discount row
+            document.querySelectorAll('.order-summary-item').forEach(item => {
+                if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                    const discountText = item.querySelector('span:last-child').textContent;
+                    voucherDiscount = parseFloat(discountText.replace('-', '').replace('%', '')) || 0;
+                }
+            });
+            
+            // If no row found, check hidden input
+            if (voucherDiscount === 0) {
+                const voucherDiscountInput = document.querySelector('input[name="voucher_discount"]');
+                if (voucherDiscountInput) {
+                    voucherDiscount = parseFloat(voucherDiscountInput.value) || 0;
+                }
+            }
+            
+            const discountAmount = subtotal * (voucherDiscount / 100);
+            const newTotal = subtotal - discountAmount + shippingFee;
+            
+            console.log(`Total recalculation - Subtotal: ${subtotal}, Discount: ${voucherDiscount}%, Amount: ${discountAmount}, Shipping: ${shippingFee}, Total: ${newTotal}`);
+            
+            document.getElementById('total-amount').textContent = `RM ${newTotal.toFixed(2)}`;
+        }
+
+        // Replace your existing calculation code with this consolidated function
+        function calculateOrderTotal(shippingFee = null, voucherDiscount = null) {
+            // Get shipping fee from parameter or input field
+            if (shippingFee === null) {
+                shippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 0;
+            }
+            
+            // Get voucher discount from parameter or check UI elements
+            if (voucherDiscount === null) {
+                // Check for voucher discount from discount row
+                document.querySelectorAll('.order-summary-item').forEach(item => {
+                    if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                        const discountText = item.querySelector('span:last-child').textContent;
+                        voucherDiscount = parseFloat(discountText.replace('-', '').replace('%', '')) || 0;
+                    }
+                });
+                
+                // If no row found, check hidden input
+                if (!voucherDiscount) {
+                    const voucherDiscountInput = document.querySelector('input[name="voucher_discount"]');
+                    if (voucherDiscountInput) {
+                        voucherDiscount = parseFloat(voucherDiscountInput.value) || 0;
+                    } else {
+                        voucherDiscount = 0;
+                    }
+                }
+            }
+            
+            // Calculate final price
+            const subtotal = <?php echo $total; ?>;
+            const discountAmount = subtotal * (voucherDiscount / 100);
+            const newTotal = subtotal - discountAmount + shippingFee;
+            
+            console.log(`Order calculation - Subtotal: ${subtotal}, Discount: ${voucherDiscount}%, Amount: ${discountAmount}, Shipping: ${shippingFee}, Total: ${newTotal}`);
+            
+            // Update UI
+            document.getElementById('total-amount').textContent = `RM ${newTotal.toFixed(2)}`;
+            
+            return newTotal;
+        }
     </script>
 </body>
 
