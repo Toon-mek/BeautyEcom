@@ -207,7 +207,7 @@ $totalPages = ceil($totalOrders / $perPage);
                             <td>
                                 <form method="POST" style="margin: 0;">
                                     <input type="hidden" name="order_id" value="<?php echo $order['OrderID']; ?>">
-                                    <select name="status" onchange="this.form.submit()" class="order-status-select">
+                                    <select name="status" onchange="this.form.submit()" class="order-status-select" <?php if ($order['OrderStatus'] === 'Completed') echo 'disabled'; ?>>
                                         <option value="Pending" <?php echo ($order['OrderStatus'] === 'Pending') ? 'selected' : ''; ?>>Pending</option>
                                         <option value="Completed" <?php echo ($order['OrderStatus'] === 'Completed') ? 'selected' : ''; ?>>Completed</option>
                                         <option value="Cancelled" <?php echo ($order['OrderStatus'] === 'Cancelled') ? 'selected' : ''; ?>>Cancelled</option>

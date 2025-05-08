@@ -303,6 +303,16 @@ $displayName = getDisplayName();
                 </div>
             </div>
 
+            <div class="admin-dashboard-card staff">
+                <div class="admin-dashboard-icon">
+                    <span class="icon icon-users"></span>
+                </div>
+                <div class="admin-dashboard-info">
+                    <h3>Total Staff</h3>
+                    <p><?php echo getTotalStaff(); ?></p>
+                </div>
+            </div>
+
             <div class="admin-dashboard-card orders">
                 <div class="admin-dashboard-icon">
                     <span class="icon icon-orders"></span>
