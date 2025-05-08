@@ -1134,5 +1134,11 @@ function buildOrderSortLink($column, $label) {
     return "<a href='?sort=$column&order=$nextDir'>" . htmlspecialchars($label) . " $arrow</a>";
 }
 
+function getTotalStaff()
+{
+    global $pdo;
+    return $pdo->query("SELECT COUNT(*) FROM staff")->fetchColumn();
+}
+
 ?>
     
