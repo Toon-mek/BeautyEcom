@@ -15,6 +15,11 @@ $end_date = $_GET['end_date'] ?? date('Y-m-t');
 // Get total sales
 $total_sales = getTotalSales($pdo);
 
+// Get total completed orders in date range
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM orders WHERE OrderStatus = 'Completed' AND OrderDate BETWEEN ? AND ?");
+$stmt->execute([$start_date, $end_date]);
+$total_orders = $stmt->fetchColumn();
+
 // Get sales by date range
 $stmt = $pdo->prepare("
     SELECT DATE(OrderDate) as sale_date, 
@@ -226,7 +231,7 @@ $payment_distribution = $stmt->fetchAll();
                         </div>
                         <div class="sales-stat-card">
                             <h3>Total Orders</h3>
-                            <div class="value"><?php echo count($sales_by_date); ?></div>
+                            <div class="value"><?php echo $total_orders; ?></div>
                         </div>
                         <div class="sales-stat-card">
                             <h3>Average Order Value</h3>
