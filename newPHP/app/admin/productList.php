@@ -153,74 +153,76 @@ function buildSortLink($column, $label)
             <button class="crud-btn add-btn" onclick="showAddForm()" style="margin-bottom:18px;background:#27ae60;color:#fff;">Add Product</button>
 
             <!-- Product Table -->
-            <table class="product-table">
-                <thead>
-                    <tr>
-                        <th><?php echo buildSortLink('ProductID', 'ID'); ?></th>
-                        <th><?php echo buildSortLink('CategoryName', 'Category'); ?></th>
-                        <th><?php echo buildSortLink('ProductName', 'Name'); ?></th>
-                        <th>Description</th>
-                        <th><?php echo buildSortLink('Price', 'Price'); ?></th>
-                        <th><?php echo buildSortLink('Quantity', 'Quantity'); ?></th>
-                        <th>Image 1</th>
-                        <th>Image 2</th>
-                        <th>Image 3</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($products as $product): ?>
+            <div class="table-responsive">
+                <table class="product-table">
+                    <thead>
                         <tr>
-                            <td><?php echo $product['ProductID']; ?></td>
-                            <td><?php echo htmlspecialchars($product['CategoryName']); ?></td>
-                            <td><?php echo htmlspecialchars($product['ProductName']); ?></td>
-                            <td>
-                                <span class="truncate-description" title="<?= htmlspecialchars($product['Description']) ?>">
-                                    <?= htmlspecialchars($product['Description']) ?>
-                                </span>
-                            </td>
-
-                            <td><?php echo number_format($product['Price'], 2); ?></td>
-                            <td><?php echo $product['Quantity']; ?></td>
-                            <td>
-                                <?php if ($product['ProdIMG1']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
-                                <?php else: ?>
-                                    <span style="color:#aaa;">No Img</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($product['ProdIMG2']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG2']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
-                                <?php else: ?>
-                                    <span style="color:#aaa;">No Img</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php if ($product['ProdIMG3']): ?>
-                                    <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG3']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
-                                <?php else: ?>
-                                    <span style="color:#aaa;">No Img</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <button class="crud-btn edit-btn" onclick="showEditForm(
-                            <?php echo $product['ProductID']; ?>,
-                            '<?php echo htmlspecialchars(addslashes($product['CategoryID'])); ?>',
-                            '<?php echo htmlspecialchars(addslashes($product['ProductName'])); ?>',
-                            `<?php echo htmlspecialchars(addslashes($product['Description'])); ?>`,
-                            '<?php echo $product['Price']; ?>',
-                            '<?php echo $product['Quantity']; ?>',
-                            '<?php echo htmlspecialchars(addslashes($product['ProdIMG1'])); ?>',
-                            '<?php echo htmlspecialchars(addslashes($product['ProdIMG2'])); ?>',
-                            '<?php echo htmlspecialchars(addslashes($product['ProdIMG3'])); ?>'
-                        )">Edit</button>
-                                <a href="?delete=<?php echo $product['ProductID']; ?>" class="crud-btn delete-btn" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
-                            </td>
+                            <th><?php echo buildSortLink('ProductID', 'ID'); ?></th>
+                            <th><?php echo buildSortLink('CategoryName', 'Category'); ?></th>
+                            <th><?php echo buildSortLink('ProductName', 'Name'); ?></th>
+                            <th>Description</th>
+                            <th><?php echo buildSortLink('Price', 'Price'); ?></th>
+                            <th><?php echo buildSortLink('Quantity', 'Quantity'); ?></th>
+                            <th>Image 1</th>
+                            <th>Image 2</th>
+                            <th>Image 3</th>
+                            <th>Actions</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($products as $product): ?>
+                            <tr>
+                                <td><?php echo $product['ProductID']; ?></td>
+                                <td><?php echo htmlspecialchars($product['CategoryName']); ?></td>
+                                <td><?php echo htmlspecialchars($product['ProductName']); ?></td>
+                                <td>
+                                    <span class="truncate-description" title="<?= htmlspecialchars($product['Description']) ?>">
+                                        <?= htmlspecialchars($product['Description']) ?>
+                                    </span>
+                                </td>
+
+                                <td><?php echo number_format($product['Price'], 2); ?></td>
+                                <td><?php echo $product['Quantity']; ?></td>
+                                <td>
+                                    <?php if ($product['ProdIMG1']): ?>
+                                        <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG1']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
+                                    <?php else: ?>
+                                        <span style="color:#aaa;">No Img</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($product['ProdIMG2']): ?>
+                                        <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG2']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
+                                    <?php else: ?>
+                                        <span style="color:#aaa;">No Img</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if ($product['ProdIMG3']): ?>
+                                        <img src="../uploads/<?php echo htmlspecialchars($product['ProdIMG3']); ?>" class="product-image" alt="<?php echo htmlspecialchars($product['ProductName']); ?>">
+                                    <?php else: ?>
+                                        <span style="color:#aaa;">No Img</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <button class="crud-btn edit-btn" onclick="showEditForm(
+                                <?php echo $product['ProductID']; ?>,
+                                '<?php echo htmlspecialchars(addslashes($product['CategoryID'])); ?>',
+                                '<?php echo htmlspecialchars(addslashes($product['ProductName'])); ?>',
+                                `<?php echo htmlspecialchars(addslashes($product['Description'])); ?>`,
+                                '<?php echo $product['Price']; ?>',
+                                '<?php echo $product['Quantity']; ?>',
+                                '<?php echo htmlspecialchars(addslashes($product['ProdIMG1'])); ?>',
+                                '<?php echo htmlspecialchars(addslashes($product['ProdIMG2'])); ?>',
+                                '<?php echo htmlspecialchars(addslashes($product['ProdIMG3'])); ?>'
+                            )">Edit</button>
+                                    <a href="?delete=<?php echo $product['ProductID']; ?>" class="crud-btn delete-btn" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
 
             <?php if ($totalPages > 1): ?>
                 <div class="pagination">
