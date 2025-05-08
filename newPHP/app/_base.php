@@ -346,6 +346,10 @@ function processCheckout($pdo, $selectedItems) {
         // Get shipping fee from POST if available
         $shippingFee = isset($_POST['shipping_fee']) ? floatval($_POST['shipping_fee']) : 0;
 
+        // Get voucher information
+        $voucherId = $_POST['voucher_id'] ?? null;
+        $voucherDiscount = isset($_POST['voucher_discount']) ? floatval($_POST['voucher_discount']) : 0;
+
         // Validate stock availability for all selected items
         $placeholders = str_repeat('?,', count($selectedItems) - 1) . '?';
         $stmt = $pdo->prepare("
@@ -358,22 +362,30 @@ function processCheckout($pdo, $selectedItems) {
         $stmt->execute($selectedItems);
         $items = $stmt->fetchAll();
 
-        // Calculate order total
-        $orderTotal = 0;
+        // Calculate order total with discount applied
+        $subtotal = 0;
         foreach ($items as $item) {
             if ($item['CartQuantity'] > $item['StockQuantity']) {
                 throw new Exception("Not enough stock for {$item['ProductName']}");
             }
-            $orderTotal += $item['Price'] * $item['CartQuantity'];
+            $subtotal += $item['Price'] * $item['CartQuantity'];
         }
-        $orderTotal += $shippingFee;
 
-        // Create order with total amount and shipping fee
+        // Apply voucher discount
+        if ($voucherDiscount > 0) {
+            $discountAmount = $subtotal * ($voucherDiscount / 100);
+            $subtotal -= $discountAmount;
+        }
+
+        // Add shipping fee
+        $orderTotal = $subtotal + $shippingFee;
+
+        // Create order with voucher ID
         $stmt = $pdo->prepare("
-            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount, ShippingFee) 
-            VALUES (?, NOW(), 'Pending', ?, ?)
+            INSERT INTO orders (MemberID, OrderDate, OrderStatus, OrderTotalAmount, VoucherID, ShippingFee) 
+            VALUES (?, NOW(), 'Pending', ?, ?, ?)
         ");
-        $stmt->execute([$_SESSION['member_id'], $orderTotal, $shippingFee]);
+        $stmt->execute([$_SESSION['member_id'], $orderTotal, $voucherId, $shippingFee]);
         $orderId = $pdo->lastInsertId();
 
         // Create order items and update stock
@@ -733,7 +745,7 @@ function uploadImageOrKeep($inputName, $oldValue = null)
 // ------------------------------
 function redirectIfInvalidOrder($pdo, $order_id) {
     if (!isset($_SESSION['member_id']) || !isset($order_id)) {
-        header("Location: index.php");
+        header("Location: /../index.php");
         exit();
     }
 
@@ -1135,4 +1147,3 @@ function buildOrderSortLink($column, $label) {
 }
 
 ?>
-    

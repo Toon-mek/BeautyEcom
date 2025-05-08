@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../_base.php';
 // Redirect if not logged in
 redirectIfNotLoggedIn();
+
 // Get cart items
 $selected_ids = $_POST['selected_items'] ?? [];
 if (empty($selected_ids)) {
@@ -20,14 +21,49 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([...$selected_ids, $_SESSION['member_id']]);
 $cart_items = $stmt->fetchAll();
+
 // Total only selected items
 $total = calculateCartTotal($cart_items);
+
 // Redirect if cart is empty
 redirectIfCartIsEmpty($cart_items);
-// Calculate total
-$total = calculateCartTotal($cart_items);
+
+// Handle voucher application
+$voucher = null;
+$error_message = null;
+$voucher_code = $_POST['voucher_code'] ?? null;
+$voucher_discount = 0;
+
+// Only process voucher if "apply_voucher" button was clicked or if a voucher code exists
+if (isset($_POST['apply_voucher']) || $voucher_code) {
+    if (!empty($voucher_code)) {
+        $stmt = $pdo->prepare("
+            SELECT * FROM voucher 
+            WHERE Code = ? AND Status = 'Active' AND ExpiryDate >= CURDATE()
+        ");
+        $stmt->execute([$voucher_code]);
+        $voucher = $stmt->fetch();
+
+        if ($voucher) {
+            $voucher_discount = $voucher['Discount'];
+            // Apply percentage discount
+            $discounted_amount = $total * ($voucher_discount / 100);
+            $total = $total - $discounted_amount;
+        } else {
+            $error_message = "Invalid or expired voucher code.";
+        }
+    } else {
+        $error_message = "Please enter a voucher code.";
+    }
+    
+    // If just applying a voucher (not checking out), regenerate the form with selected items
+    if (isset($_POST['apply_voucher'])) {
+        // We're just applying a voucher, not checking out yet
+        $_POST['checkout'] = null;
+    }
+}
+
 // Handle checkout
-// $error = processCheckout($pdo, $cart_items, $total);
 $error = null;
 handleCartActions($pdo);
 ?>
@@ -48,6 +84,10 @@ handleCartActions($pdo);
 
         <?php if (isset($error)): ?>
             <div class="alert alert-danger"><?php echo $error; ?></div>
+        <?php endif; ?>
+
+        <?php if (isset($error_message)): ?>
+            <div class="alert alert-danger"><?php echo $error_message; ?></div>
         <?php endif; ?>
 
         <form method="POST" action="order_confirmation.php" enctype="multipart/form-data">
@@ -142,6 +182,34 @@ handleCartActions($pdo);
                             <span id="shipping-fee-display">RM 5.00</span>
                         </div>
 
+                        <!-- Voucher Section -->
+                        <div class="voucher-section">
+                            <div class="voucher-input">
+                                <input type="text" name="voucher_code" id="voucher_code" placeholder="Enter voucher code" 
+                                       value="<?php echo htmlspecialchars($voucher_code ?? ''); ?>" 
+                                       class="form-input" <?php echo isset($voucher) && $voucher ? 'disabled' : ''; ?>>
+                                
+                                <button type="button" id="apply_voucher_btn" class="btn-apply-voucher" 
+                                        <?php echo isset($voucher) && $voucher ? 'disabled' : ''; ?>>Apply</button>
+                            </div>
+                            
+                            <div id="voucher-message" class="<?php echo isset($voucher) ? 'voucher-success' : (isset($error_message) ? 'voucher-error' : ''); ?>">
+                                <?php if (isset($voucher) && $voucher): ?>
+                                    <i class="fas fa-check-circle"></i> Voucher applied successfully!
+                                <?php elseif (isset($error_message)): ?>
+                                    <i class="fas fa-exclamation-circle"></i> <?php echo $error_message; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Voucher Discount Row -->
+                        <?php if ($voucher_discount > 0): ?>
+                            <div class="order-summary-item">
+                                <span>Voucher Discount</span>
+                                <span>-<?php echo $voucher_discount; ?>%</span>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="order-summary-item order-total">
                             <strong>Total</strong>
                             <strong id="total-amount">RM <?php echo number_format($total + 5, 2); ?></strong>
@@ -149,6 +217,13 @@ handleCartActions($pdo);
 
                         <!-- Hidden input for shipping fee -->
                         <input type="hidden" name="shipping_fee" id="shipping-fee-input" value="5">
+
+                        <!-- Add voucher information to the form submission -->
+                        <?php if ($voucher): ?>
+                            <input type="hidden" name="voucher_id" value="<?php echo $voucher['VoucherID']; ?>">
+                            <input type="hidden" name="voucher_code" value="<?php echo htmlspecialchars($voucher['Code']); ?>">
+                            <input type="hidden" name="voucher_discount" value="<?php echo $voucher_discount; ?>">
+                        <?php endif; ?>
 
                         <!-- If selected_items is passed, include them in the form -->
                         <?php foreach ($cart_items as $item): ?>
@@ -227,6 +302,24 @@ handleCartActions($pdo);
 
         // Payment method handling
         document.addEventListener('DOMContentLoaded', function() {
+            // Add this code at the start of the DOMContentLoaded event
+            // Initially disable the voucher section
+            const voucherInput = document.getElementById('voucher_code');
+            const applyButton = document.getElementById('apply_voucher_btn');
+            const voucherSection = document.querySelector('.voucher-section');
+            
+            if (voucherInput && applyButton) {
+                voucherInput.disabled = true;
+                applyButton.disabled = true;
+                
+                // Add a disabled message
+                const disabledMessage = document.createElement('div');
+                disabledMessage.id = 'voucher-disabled-message';
+                disabledMessage.className = 'voucher-info';
+                disabledMessage.innerHTML = '<i class="fas fa-info-circle"></i> Please select a state before applying a voucher';
+                voucherSection.appendChild(disabledMessage);
+            }
+
             const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
             const hiddenInput = document.getElementById('selected_payment_method');
 
@@ -277,6 +370,38 @@ handleCartActions($pdo);
                     const selectedState = stateSelect.value;
                     let shippingFee = 5; // Default shipping fee
 
+                    // Enable or disable voucher section based on state selection
+                    const voucherInput = document.getElementById('voucher_code');
+                    const applyButton = document.getElementById('apply_voucher_btn');
+                    const disabledMessage = document.getElementById('voucher-disabled-message');
+                    
+                    if (selectedState === '') {
+                        // Disable voucher section when no state is selected
+                        if (voucherInput && applyButton) {
+                            voucherInput.disabled = true;
+                            applyButton.disabled = true;
+                            if (disabledMessage) disabledMessage.style.display = 'block';
+                        }
+                        
+                        // Hide shipping fee row
+                        shippingFeeRow.style.display = 'none';
+                        shippingFee = 0;
+                    } else {
+                        // Enable voucher section when state is selected
+                        if (voucherInput && !voucherInput.getAttribute('data-voucher-applied')) {
+                            voucherInput.disabled = false;
+                        }
+                        if (applyButton) {
+                            applyButton.disabled = false;
+                        }
+                        if (disabledMessage) disabledMessage.style.display = 'none';
+                        
+                        // Show shipping fee row
+                        shippingFeeRow.style.display = 'flex';
+                        
+                        // Your existing code for shipping fee calculation
+                    }
+
                     // Check if state is empty
                     if (selectedState === '') {
                         // Hide shipping fee row
@@ -298,12 +423,249 @@ handleCartActions($pdo);
                     // Update the hidden input
                     shippingFeeInput.value = shippingFee;
 
-                    // Update the total amount
-                    const newTotal = cartTotal + shippingFee;
+                    // Update the total amount - INCLUDE VOUCHER DISCOUNT
+                    const voucherDiscount = <?php echo $voucher_discount ?: 0; ?>;
+                    const subtotal = cartTotal;
+                    const discountAmount = subtotal * (voucherDiscount / 100);
+                    const newTotal = subtotal - discountAmount + shippingFee;
                     totalAmountDisplay.textContent = `RM ${newTotal.toFixed(2)}`;
 
-                    console.log(`Shipping fee updated: ${selectedState === '' ? 'Hidden' : 'RM' + shippingFee.toFixed(2)} for ${selectedState || 'No state selected'}`);
+                    console.log(`Shipping fee: RM ${shippingFee.toFixed(2)}, Discount: ${voucherDiscount}%, Final total: RM ${newTotal.toFixed(2)}`);
                 }
+            }
+        });
+
+        // Voucher application with AJAX
+        function applyVoucherHandler() {
+            const voucherCode = document.getElementById('voucher_code').value;
+            const messageDiv = document.getElementById('voucher-message');
+            
+            if (!voucherCode) {
+                messageDiv.className = 'voucher-error';
+                messageDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Please enter a voucher code.';
+                return;
+            }
+            
+            // Collect selected items
+            const selectedItems = [];
+            document.querySelectorAll('input[name="selected_items[]"]').forEach(item => {
+                selectedItems.push(item.value);
+            });
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('voucher_code', voucherCode);
+            formData.append('apply_voucher', '1');
+            selectedItems.forEach(item => {
+                formData.append('selected_items[]', item);
+            });
+            
+            // Show loading indicator
+            messageDiv.className = '';
+            messageDiv.textContent = 'Checking voucher...';
+            
+            // Send AJAX request
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Create a temporary div to parse the response
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Get updated total
+                var newTotal = doc.getElementById('total-amount')?.textContent;
+                if (newTotal) {
+                    document.getElementById('total-amount').textContent = newTotal;
+                }
+                
+                // Get voucher message
+                const newMessage = doc.getElementById('voucher-message');
+                if (newMessage) {
+                    messageDiv.className = newMessage.className;
+                    messageDiv.innerHTML = newMessage.innerHTML;
+                }
+                
+                // Update voucher discount row - FIXED SELECTOR CODE
+                // Find discount row in the fetched HTML
+                let discountRow = null;
+                doc.querySelectorAll('.order-summary-item').forEach(item => {
+                    if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                        discountRow = item;
+                    }
+                });
+                
+                // Find discount row in the current page
+                let currentDiscountRow = null;
+                document.querySelectorAll('.order-summary-item').forEach(item => {
+                    if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                        currentDiscountRow = item;
+                    }
+                });
+                
+                if (discountRow && !currentDiscountRow) {
+                    // Add discount row if it doesn't exist
+                    const orderTotal = document.querySelector('.order-total');
+                    orderTotal.insertAdjacentHTML('beforebegin', discountRow.outerHTML);
+                } else if (!discountRow && currentDiscountRow) {
+                    // Remove discount row if voucher is invalid
+                    currentDiscountRow.remove();
+                }
+                
+                // Update hidden fields for checkout
+                const voucherFields = doc.querySelectorAll('input[name^="voucher_"]');
+                if (voucherFields.length > 0) {
+                    // Add or update voucher fields
+                    document.querySelectorAll('input[name^="voucher_"]').forEach(el => el.remove());
+                    voucherFields.forEach(field => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = field.name;
+                        input.value = field.value;
+                        document.querySelector('form').appendChild(input);
+                    });
+                    
+                    // Disable the voucher input and apply button - WITH NULL CHECKS
+                    const voucherInput = document.getElementById('voucher_code');
+                    const applyButton = document.getElementById('apply_voucher_btn');
+                    
+                    if (voucherInput) {
+                        voucherInput.disabled = true;
+                    }
+                    
+                    if (applyButton) {
+                        applyButton.disabled = true;
+                    }
+                } else {
+                    // Remove voucher fields if voucher is invalid
+                    document.querySelectorAll('input[name^="voucher_"]').forEach(el => el.remove());
+                }
+
+                // Manually recalculate the total in case the server response didn't include it
+                const currentShippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 5;
+                let discountApplied = false;
+
+                // Check if a discount row was found in the response
+                doc.querySelectorAll('.order-summary-item').forEach(item => {
+                    if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                        discountApplied = true;
+                    }
+                });
+
+                if (discountApplied) {
+                    // Extract the discount percentage from the response
+                    let discountPercent = 0;
+                    doc.querySelectorAll('.order-summary-item').forEach(item => {
+                        if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                            const discountText = item.querySelector('span:last-child').textContent;
+                            discountPercent = parseFloat(discountText.replace('-', '').replace('%', '')) || 0;
+                        }
+                    });
+                    
+                    // Calculate the new total with discount
+                    const subtotal = <?php echo $total; ?>;
+                    const discountAmount = subtotal * (discountPercent / 100);
+                    const newTotal = subtotal - discountAmount + currentShippingFee;
+                    document.getElementById('total-amount').textContent = `RM ${newTotal.toFixed(2)}`;
+                    console.log(`Manual recalculation - Subtotal: ${subtotal}, Discount: ${discountPercent}%, Amount: ${discountAmount}, Shipping: ${currentShippingFee}, Total: ${newTotal}`);
+                }
+            })
+            .catch(error => {
+                messageDiv.className = 'voucher-error';
+                messageDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error checking voucher. Please try again.';
+                console.error('Error:', error);
+                
+                // Make sure input and button are enabled after error - WITH NULL CHECKS
+                const voucherInput = document.getElementById('voucher_code');
+                const applyButton = document.getElementById('apply_voucher_btn');
+                
+                if (voucherInput) {
+                    voucherInput.disabled = false;
+                }
+                
+                if (applyButton) {
+                    applyButton.disabled = false;
+                }
+                
+                // Keep the current shipping fee value
+                const currentShippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 5;
+                const shippingFeeInput = document.getElementById('shipping-fee-input');
+                const shippingFeeDisplay = document.getElementById('shipping-fee-display');
+                const totalAmountDisplay = document.getElementById('total-amount');
+                
+                if (shippingFeeInput) {
+                    shippingFeeInput.value = currentShippingFee;
+                }
+                
+                if (shippingFeeDisplay) {
+                    shippingFeeDisplay.textContent = `RM ${currentShippingFee.toFixed(2)}`;
+                }
+                
+                // Recalculate total with current shipping fee
+                const subtotal = <?php echo $total; ?>;
+                const newTotal = subtotal + currentShippingFee;
+                
+                if (totalAmountDisplay) {
+                    totalAmountDisplay.textContent = `RM ${newTotal.toFixed(2)}`;
+                }
+            });
+        }
+
+        // Remove voucher handler
+        function removeVoucherHandler() {
+            // Clear the voucher code field and enable it
+            const voucherInput = document.getElementById('voucher_code');
+            voucherInput.value = '';
+            voucherInput.disabled = false;
+            
+            // Update message div
+            const messageDiv = document.getElementById('voucher-message');
+            messageDiv.className = '';
+            messageDiv.innerHTML = '';
+            
+            // Remove the voucher discount row if it exists
+            let discountRow = null;
+            document.querySelectorAll('.order-summary-item').forEach(item => {
+                if (item.querySelector('span') && item.querySelector('span').textContent === 'Voucher Discount') {
+                    discountRow = item;
+                }
+            });
+            
+            if (discountRow) {
+                discountRow.remove();
+            }
+            
+            // Remove all hidden voucher fields
+            document.querySelectorAll('input[name^="voucher_"]').forEach(el => el.remove());
+            
+            // Replace the remove button with an apply button
+            const removeButton = document.getElementById('remove_voucher_btn');
+            const applyButton = document.createElement('button');
+            applyButton.type = 'button';
+            applyButton.id = 'apply_voucher_btn';
+            applyButton.className = 'btn-apply-voucher';
+            applyButton.textContent = 'Apply';
+            removeButton.parentNode.replaceChild(applyButton, removeButton);
+            
+            // Update the total (remove discount)
+            const shippingFee = parseFloat(document.getElementById('shipping-fee-input').value) || 0;
+            const newTotal = <?php echo $total; ?> + shippingFee;
+            document.getElementById('total-amount').textContent = `RM ${newTotal.toFixed(2)}`;
+            
+            // Add event listener to the new apply button
+            document.getElementById('apply_voucher_btn').addEventListener('click', applyVoucherHandler);
+        }
+
+        // Add event listeners when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add this after your existing DOMContentLoaded code
+            
+            // Initialize apply button event listener
+            const applyButton = document.getElementById('apply_voucher_btn');
+            if (applyButton) {
+                applyButton.addEventListener('click', applyVoucherHandler);
             }
         });
     </script>
