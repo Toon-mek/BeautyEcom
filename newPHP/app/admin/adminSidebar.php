@@ -29,6 +29,9 @@ $isManager = isManager($_SESSION['staff_id']);
             <a href="productList.php"><span>Product Management</span></a>
         </li>
         <li>
+            <a href="categoryCRUD.php"><span>Category Management</span></a>
+        </li>
+        <li>
             <a href="orderList.php"><span>Order Management</span></a>
         </li>
         <?php if ($isManager): ?>
