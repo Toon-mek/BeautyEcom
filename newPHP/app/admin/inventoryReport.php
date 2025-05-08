@@ -21,7 +21,7 @@ function getInventoryStats($pdo) {
     $stats['total_value'] = $stmt->fetchColumn();
     
     // Low stock items (less than 10)
-    $stmt = $pdo->query("SELECT COUNT(*) FROM product WHERE Quantity < 10");
+    $stmt = $pdo->query("SELECT COUNT(*) FROM product WHERE Quantity <= 10");
     $stats['low_stock_count'] = $stmt->fetchColumn();
     
     // Out of stock items
@@ -37,7 +37,7 @@ function getLowStockProducts($pdo) {
         SELECT p.*, c.CategoryName 
         FROM product p 
         LEFT JOIN category c ON p.CategoryID = c.CategoryID 
-        WHERE p.Quantity < 10 
+        WHERE p.Quantity <= 10 
         ORDER BY p.Quantity ASC
     ");
     $stmt->execute();
@@ -275,6 +275,66 @@ $categoryStats = getStockValueByCategory($pdo);
             justify-content: center;
             width: 100%;
         }
+
+        /* Low Stock Warning Alert Styles */
+        .low-stock-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .low-stock-warning-icon {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 193, 7, 0.1);
+            border-radius: 50%;
+        }
+
+        .warning-triangle {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid #ffc107;
+            position: relative;
+        }
+
+        .warning-triangle::after {
+            content: "!";
+            position: absolute;
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .low-stock-warning-content {
+            flex: 1;
+        }
+
+        .low-stock-warning-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .low-stock-warning-message {
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -308,6 +368,20 @@ $categoryStats = getStockValueByCategory($pdo);
                     
                     <div class="inventory-section">
                         <h2 class="inventory-section-header">Low Stock Alert</h2>
+                        <?php if (count($lowStockProducts) > 0): ?>
+                        <div class="low-stock-warning">
+                            <div class="low-stock-warning-icon">
+                                <div class="warning-triangle"></div>
+                            </div>
+                            <div class="low-stock-warning-content">
+                                <div class="low-stock-warning-title">Low Stock Warning</div>
+                                <div class="low-stock-warning-message">
+                                    There are <?php echo count($lowStockProducts); ?> products with stock levels at or below 10 units. 
+                                    Please review the items below and consider restocking to maintain optimal inventory levels.
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         <table class="inventory-table">
                             <thead>
                                 <tr>
