@@ -29,31 +29,20 @@ if (!file_exists($uploadsDir)) {
                         <li class="profile-dropdown">
                             <?php
                             $profilePhoto = getMemberProfilePhoto($_SESSION['member_id']);
-                            $defaultPhoto = "/newPHP/app/uploads/default-profile.png";
+                            $defaultPhoto = "/newPHP/app/uploads/defaultprofilephoto.jpg";
                             $localPhotoPath = __DIR__ . "/uploads/" . $profilePhoto;
                             $photoPath = (!empty($profilePhoto) && file_exists($localPhotoPath))
                                 ? "/newPHP/app/uploads/" . htmlspecialchars($profilePhoto)
                                 : $defaultPhoto;
-                            $photoPath = "/uploads/" . htmlspecialchars($profilePhoto);
-                            $defaultPhoto = "/uploads/default-profile.png";
-                            
-                            // Fix the path check - remove the '/uploads' part since it's already in __DIR__
-                            if (!empty($profilePhoto) && !file_exists(__DIR__ . '/uploads/' . $profilePhoto)) {
-                                $photoPath = $defaultPhoto;
-                            }
                             ?>
                             <img src="<?php echo $photoPath; ?>"
                                 alt="Profile"
                                 class="profile-photo"
                                 onerror="this.onerror=null; this.src='<?php echo $defaultPhoto; ?>'">
-                            <img src="<?php echo $photoPath; ?>" 
-                                 alt="Profile" 
-                                 class="profile-photo"
-                                 onerror="this.src='<?php echo $defaultPhoto; ?>'">
                             <div class="dropdown-content">
                                 <a href="/newPHP/app/member/settings.php">Settings</a>
-                                <a href="/newPHP/app/auth/logout.php">Logout</a>
                                 <a href="/newPHP/app/order/member_order.php">Order History</a>
+                                <a href="/newPHP/app/auth/logout.php">Logout</a>
                             </div>
                         </li>
                     <?php else: ?>
