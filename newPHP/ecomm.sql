@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 07, 2025 at 05:01 PM
+-- Generation Time: May 08, 2025 at 05:51 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -39,7 +39,10 @@ CREATE TABLE `cart` (
 --
 
 INSERT INTO `cart` (`CartID`, `MemberID`, `CreatedAt`, `CartStatus`) VALUES
-(1, 5, '2025-05-07 13:18:15', 'Active');
+(1, 5, '2025-05-07 13:18:15', 'Active'),
+(2, 7, '2025-05-07 15:25:11', 'Active'),
+(3, 8, '2025-05-08 15:05:50', 'Active'),
+(4, 6, '2025-05-08 15:08:22', 'Active');
 
 -- --------------------------------------------------------
 
@@ -59,7 +62,10 @@ CREATE TABLE `cartitem` (
 --
 
 INSERT INTO `cartitem` (`CartItemID`, `CartID`, `ProductID`, `Quantity`) VALUES
-(1, 1, 38, 1);
+(14, 2, 38, 1),
+(31, 3, 38, 1),
+(32, 3, 37, 1),
+(37, 1, 38, 1);
 
 -- --------------------------------------------------------
 
@@ -152,7 +158,9 @@ CREATE TABLE `member` (
 INSERT INTO `member` (`MemberID`, `Name`, `Password`, `Email`, `PhoneNumber`, `ProfilePhoto`, `Gender`, `DateOfBirth`, `Address`, `MembershipStatus`, `Last_login`, `CreatedAt`) VALUES
 (1, 'heng', '$2y$10$OjkdrrPhSmHPQJUDFj8/HOJVZ6GYqWWtZ4f3eBWIgpheeQi3eyRLu', 'yikheng0613@gmail.com', '72983691', '68136c269b4e6_IMG20250428131320.jpg', 'Male', '2004-06-13', 'fdbsahfhioashdiohasiodhioashdioahsiodhioashidohsihd', 'Active', NULL, '2025-04-29 07:08:11'),
 (5, 'abc', '$2y$10$ss30awLTcUVnFKESHk5VJOZA87U/r5WchQY9iSOt2Id4p.1Havcju', 'abc@gmail.com', '123456789', NULL, NULL, NULL, NULL, 'Active', NULL, '2025-05-01 08:35:34'),
-(6, 'gg', '$2y$10$4zJmQQiGEJ3YNTCzzbJOOOffhrYq/777bLt.Vc2XLZ3/zjxVcbHI.', 'gg123@gmail.com', '123456789', NULL, 'Female', '2025-05-10', NULL, 'Blocked', NULL, '2025-05-01 09:03:29');
+(6, 'gg', '$2y$10$kzyAiEsAajpRkzAeuue3POJO80MLW5ixCVpDZSxaqa.L6ovI4EQge', 'gg123@gmail.com', '123456789', NULL, 'Female', '2025-05-10', NULL, 'Active', NULL, '2025-05-01 09:03:29'),
+(7, 'cc', '$2y$10$UNeYD2GmMRXJXFAVIVC9Keel7mgU7viM5/p.yBsNR0.mAbCDS3Sgi', 'cc123@gmail.com', '011-33391241', '681b7b509d8c6_wp5068006.jpg', 'Other', '2007-05-03', NULL, 'Active', NULL, '2025-05-07 15:24:20'),
+(8, 'ok', '$2y$10$/d3tITmNTs6ZbkN9rUdMJ.9ZEB3N9mkQAOx0W8AtVedC715dxJ0Jy', 'ok@gmail.com', '011-33391241', '/newPHP/app/uploads/defaultprofilephoto.jpg', 'Other', '2007-05-08', NULL, 'Active', NULL, '2025-05-08 15:03:28');
 
 -- --------------------------------------------------------
 
@@ -184,7 +192,22 @@ INSERT INTO `orderitem` (`OrderItemID`, `OrderID`, `ProductID`, `Quantity`, `Ord
 (9, 9, 37, 1, 18.90),
 (10, 10, 37, 1, 18.90),
 (11, 11, 36, 1, 8.90),
-(12, 12, 37, 1, 18.90);
+(12, 12, 37, 1, 18.90),
+(13, 13, 37, 1, 18.90),
+(14, 14, 28, 1, 11.80),
+(15, 15, 32, 1, 19.90),
+(16, 16, 36, 1, 8.90),
+(17, 16, 37, 1, 18.90),
+(18, 16, 38, 1, 40.00),
+(19, 17, 36, 1, 8.90),
+(20, 17, 37, 1, 18.90),
+(21, 18, 37, 2, 18.90),
+(22, 19, 36, 1, 8.90),
+(23, 20, 37, 1, 18.90),
+(24, 20, 38, 1, 40.00),
+(25, 21, 38, 1, 40.00),
+(26, 22, 38, 1, 40.00),
+(27, 23, 38, 1, 40.00);
 
 -- --------------------------------------------------------
 
@@ -207,18 +230,29 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`OrderID`, `MemberID`, `OrderDate`, `OrderStatus`, `OrderTotalAmount`, `VoucherID`, `ShippingFee`) VALUES
-(1, 5, '2025-05-07 13:18:34', 'Pending', 18.90, NULL, 0.00),
-(2, 5, '2025-05-07 13:29:43', 'Pending', 18.90, NULL, 0.00),
-(3, 5, '2025-05-07 13:43:00', 'Pending', 6.90, NULL, 0.00),
-(4, 5, '2025-05-07 13:44:16', 'Pending', 18.90, NULL, 0.00),
+(1, 5, '2025-05-07 13:18:34', 'Completed', 18.90, NULL, 0.00),
+(2, 5, '2025-05-07 13:29:43', 'Completed', 18.90, NULL, 0.00),
+(3, 5, '2025-05-07 13:43:00', 'Completed', 6.90, NULL, 0.00),
+(4, 5, '2025-05-07 13:44:16', 'Completed', 18.90, NULL, 0.00),
 (5, 5, '2025-05-07 13:49:11', 'Pending', 37.80, NULL, 0.00),
 (6, 5, '2025-05-07 13:52:23', 'Pending', 18.90, NULL, 0.00),
-(7, 5, '2025-05-07 13:54:23', 'Pending', 8.90, NULL, 0.00),
+(7, 5, '2025-05-07 13:54:23', 'Cancelled', 8.90, NULL, 0.00),
 (8, 5, '2025-05-07 13:56:22', 'Pending', 39.90, NULL, 0.00),
 (9, 5, '2025-05-07 14:01:08', 'Pending', 18.90, NULL, 0.00),
 (10, 5, '2025-05-07 14:40:37', 'Pending', 23.90, NULL, 5.00),
 (11, 5, '2025-05-07 14:47:53', 'Pending', 13.90, NULL, 5.00),
-(12, 5, '2025-05-07 14:56:32', 'Pending', 23.90, NULL, 5.00);
+(12, 5, '2025-05-07 14:56:32', 'Pending', 23.90, NULL, 5.00),
+(13, 7, '2025-05-07 15:26:27', 'Pending', 23.90, NULL, 5.00),
+(14, 5, '2025-05-07 15:55:39', 'Pending', 16.80, NULL, 5.00),
+(15, 5, '2025-05-07 16:14:46', 'Pending', 24.90, NULL, 5.00),
+(16, 5, '2025-05-07 16:30:31', 'Pending', 77.80, NULL, 10.00),
+(17, 5, '2025-05-07 16:38:11', 'Pending', 32.80, NULL, 5.00),
+(18, 5, '2025-05-07 16:57:41', 'Pending', 42.80, NULL, 5.00),
+(19, 5, '2025-05-07 17:23:57', 'Pending', 13.90, NULL, 5.00),
+(20, 5, '2025-05-08 06:28:20', 'Pending', 63.90, NULL, 5.00),
+(21, 6, '2025-05-08 15:08:35', 'Pending', 45.00, NULL, 5.00),
+(22, 6, '2025-05-08 15:09:10', 'Pending', 40.20, 3, 5.00),
+(23, 5, '2025-05-08 15:46:51', 'Pending', 40.20, 3, 5.00);
 
 -- --------------------------------------------------------
 
@@ -246,12 +280,23 @@ INSERT INTO `payment` (`PaymentID`, `OrderID`, `PaymentDate`, `PaymentMethod`, `
 (4, 4, '2025-05-07 13:44:16', 'Cash on Delivery', 18.90, 'Paid'),
 (5, 5, '2025-05-07 13:49:11', 'Cash on Delivery', 37.80, 'Paid'),
 (6, 6, '2025-05-07 13:52:23', 'Cash on Delivery', 18.90, 'Paid'),
-(7, 7, '2025-05-07 13:54:23', 'Cash on Delivery', 8.90, 'Paid'),
+(7, 7, '2025-05-07 13:54:23', 'Cash on Delivery', 8.90, 'Cancelled'),
 (8, 8, '2025-05-07 13:56:22', 'Cash on Delivery', 39.90, 'Paid'),
 (9, 9, '2025-05-07 14:01:08', 'Cash on Delivery', 18.90, 'Paid'),
 (10, 10, '2025-05-07 14:40:38', 'Cash on Delivery', 23.90, 'Paid'),
 (11, 11, '2025-05-07 14:47:53', 'Cash on Delivery', 13.90, 'Paid'),
-(12, 12, '2025-05-07 14:56:32', 'Cash on Delivery', 23.90, 'Paid');
+(12, 12, '2025-05-07 14:56:32', 'Cash on Delivery', 23.90, 'Paid'),
+(13, 13, '2025-05-07 15:26:27', 'Cash on Delivery', 23.90, 'Paid'),
+(14, 14, '2025-05-07 15:55:39', 'Cash on Delivery', 16.80, 'Paid'),
+(15, 15, '2025-05-07 16:14:46', 'Cash on Delivery', 24.90, 'Paid'),
+(16, 16, '2025-05-07 16:30:31', 'Cash on Delivery', 77.80, 'Paid'),
+(17, 17, '2025-05-07 16:38:11', 'Cash on Delivery', 32.80, 'Paid'),
+(18, 18, '2025-05-07 16:57:41', 'Cash on Delivery', 42.80, 'Paid'),
+(19, 19, '2025-05-07 17:23:57', 'Cash on Delivery', 13.90, 'Paid'),
+(20, 20, '2025-05-08 06:28:20', 'Cash on Delivery', 63.90, 'Paid'),
+(21, 21, '2025-05-08 15:08:35', 'Cash on Delivery', 45.00, 'Pending'),
+(22, 22, '2025-05-08 15:09:10', 'Cash on Delivery', 40.20, 'Pending'),
+(23, 23, '2025-05-08 15:46:51', 'Cash on Delivery', 40.20, 'Pending');
 
 -- --------------------------------------------------------
 
@@ -303,17 +348,17 @@ INSERT INTO `product` (`ProductID`, `CategoryID`, `ProductName`, `Description`, 
 (25, 3, 'REXONA Vitamin Bright Peach Spray Deo 135ml', 'Rexona Women Spray Vitamin Bright Peach helps penetrate through skin layer^ for bright and glowing underarm skin^^. With 70x Vitamin C\' and delicately crafted peach fragrance inspired by world-class perfume. ^within epidermis. based on clinical test, results may vary. vs. another Unilever brightening deo.', 18.90, 1000, 'WTCMY-1010718-side-zoom.avif', 'WTCMY-1010718-front-zoom.avif', NULL),
 (26, 4, 'SUNSILK Anti Dandruff Shampoo 300ml', 'Promote a reduced usage of virgin materials by using recycled content instead. Bottle is made with 25% post recycled content - Anti-Dandruff Solution - Dr. Francesca Fusco Scalp Care Expert - With Zpt Citrus Complex - For A Restored Dandruff-Free* Scalp', 13.50, 1000, 'WTCMY-68746-side-zoom.avif', 'WTCMY-68746-front-zoom.avif', 'WTCMY-68746-swatch-zoom.avif'),
 (27, 5, 'VICKS Baby Balsam Moisturising & Soothing Baby Care Rub 50g', 'Use only as intended. Gently massage on chest, neck, back and soles of feet to help soothe and comfort.', 19.30, 1000, 'WTCMY-25918-front-zoom.avif', 'WTCMY-25918-back-zoom.avif', 'WTCMY-25918-alt1-zoom.avif'),
-(28, 5, 'BYE BYE FEVER Babies 4\'s - Cooling Gel Sheet', NULL, 11.80, 1000, 'WTCMY-42142-front-zoom.avif', 'WTCMY-42142-side-zoom.avif', NULL),
+(28, 5, 'BYE BYE FEVER Babies 4\'s - Cooling Gel Sheet', NULL, 11.80, 999, 'WTCMY-42142-front-zoom.avif', 'WTCMY-42142-side-zoom.avif', NULL),
 (29, 6, 'MAMYPOKO Air Fit Baby Girl Disposable Diapers XL 38\'s', 'MamyPoko Pants Air Fit with its Air Fit Gathers around the thighs fit closely around the leg cuffs leaving no gap for leakages. The cloth like Soft Stretchy material fits gently around the waist to prevent leakages even when baby moves. MamyPoko Air Fit is the No. 1 Mother\'s choice of diaper in Japan.', 60.90, 998, 'WTCMY-84416-front-zoom.avif', NULL, NULL),
 (30, 6, 'VASELINE Baby Protecting Jelly 50ml', 'Vaseline® Baby Protecting Jelly locks moisture to help protect baby\'s skin from discomfort with a light baby powder fragrance. Made from triple-purified petrolatum. Purity guaranteed. Forms a protective barrier to keep out wetness and protect your baby\'s skin', 6.50, 1000, 'WTCMY-34640-front-zoom.avif', 'WTCMY-34640-back-zoom.avif', NULL),
 (31, 7, 'DARLIE Toothpaste Double Action Jumbo 250g', 'The perfect combination of spearmint and peppermint refreshes your morning, giving you a cooling sensation and freshened breath. With this confidence-boosting freshness, your smile will draw people closer - Enriched with natural spearmint & peppermint essence', 15.50, 1000, 'WTCMY-20612-back-zoom.avif', 'WTCMY-20612-front-zoom.avif', 'WTCMY-20612-side-zoom.avif'),
-(32, 7, 'SENSODYNE Sensitivity & Gum Toothpaste 100g', 'Sensodyne Sensitivity & Gum toothpaste is a clinically proven daily dual action toothpaste for people with sensitive teeth and gum problems. Its dual action formula works in two ways. It builds a protective layer over sensitive areas and it targets and removes plaque bacteria to help support good gum health.', 19.90, 1000, 'WTCMY-21950-front-zoom.avif', 'WTCMY-21950-side-zoom.avif', NULL),
+(32, 7, 'SENSODYNE Sensitivity & Gum Toothpaste 100g', 'Sensodyne Sensitivity & Gum toothpaste is a clinically proven daily dual action toothpaste for people with sensitive teeth and gum problems. Its dual action formula works in two ways. It builds a protective layer over sensitive areas and it targets and removes plaque bacteria to help support good gum health.', 19.90, 999, 'WTCMY-21950-front-zoom.avif', 'WTCMY-21950-side-zoom.avif', NULL),
 (33, 8, 'KOTEX Longer & Wider Scented Pantyliner 17.5cm (30s) - Odor Care with Daun Sirih Extract Liners', 'Enjoy extra comfort and confidence with Kotex Longer & Wider Scented Panty Liners 17.5cm. These liners come with Daun Sirih Extract, offer light and breathable protection, so you stay fresh and dry every day!', 6.90, 999, 'WTCMY-1000821-side-zoom.avif', 'WTCMY-1000821-front-zoom.avif', 'WTCMY-1000821-back-zoom.avif'),
 (34, 8, 'CAREFREE Super Dry Shower Fresh Scent Liners 2x50s', 'Shaped for a natural and comfortable fit. Moisture proof backing for protection against leakage. Soft cover designed for dryness and comfort. Dermatologically tested against allergy and irritation', 18.90, 998, 'WTCMY-41563-back-zoom.avif', 'WTCMY-41563-front-zoom.avif', 'WTCMY-41563-side-zoom.avif'),
 (35, 9, 'DUREX Condom Close Fit 12s', 'Why You\'ll Love Durex Close Fit: Durability, Reliability, Excellence Since 1929. Size, Comfortable Fit, Small Size (Nominal Width: 49Mm). Latex Condoms With Regular Silicone Lube, Easy-On, Teat Ended Smooth Shape To Be Easier To Put On And Provide A Better Fit During Sex.', 39.90, 999, 'WTCMY-11968-side-zoom.avif', 'WTCMY-11968-front-zoom.avif', 'WTCMY-11968-back-zoom.avif'),
-(36, 9, 'ONE Extended Pleasures Condom 3\'s', 'ONE Extended Pleasures is the way to go for a good and long time. Softer latex condoms that features a lubricant with benzocaine, a mild male genital desensitizer, to help prevent premature ejaculation, extends performance time, and boosts self esteem in the bedroom. Safe, non prescriptive and improves premature ejaculation P.E. with repeated use.', 8.90, 998, 'WTCMY-51194-front-zoom.avif', 'WTCMY-51194-back-zoom.avif', 'WTCMY-51194-alt1-zoom.avif'),
-(37, 9, 'DUREX Condom Fetherlite Ultima Extra Thin 3s', 'Why You\'ll Love Durex Fetherlite Ultima, extra Thin For Enhanced Sensitivity, ofers Increased Sensitivity. Increasing The Feeling Of Closeness To Your Partner Without Sacrificing Safety. Sleek Fit And Feel.', 18.90, 993, 'WTCMY-15483-side-zoom.avif', 'WTCMY-15483-front-zoom.avif', 'WTCMY-11968-back-zoom.avif'),
-(38, 9, 'DUREX Vibrating Ring Intense 1s', 'Why You\'ll Love Durex Play Vibrations Ring- Provides Up To 20 Minutes Pulsating Sensations For Her And For Him.- Can Help Him Stay Harder For Longer.- Super-Stretchy And Soft For Comfort.- Can Increase Pleasure For Both Partners.- Reusable Up To 6 Times.- It Is Battery Operated And Easy To Switch On/Off.- Can Be Used With Condoms, Lube Or Pleasure Gels.- Easy To Wear, Replaceable Battery.- Waterproof.', 40.00, 1000, 'WTCMY-14964-front-zoom.avif', 'WTCMY-14964-back-zoom.avif', 'WTCMY-14964-alt2-zoom.avif');
+(36, 9, 'ONE Extended Pleasures Condom 3\'s', 'ONE Extended Pleasures is the way to go for a good and long time. Softer latex condoms that features a lubricant with benzocaine, a mild male genital desensitizer, to help prevent premature ejaculation, extends performance time, and boosts self esteem in the bedroom. Safe, non prescriptive and improves premature ejaculation P.E. with repeated use.', 8.90, 995, 'WTCMY-51194-front-zoom.avif', 'WTCMY-51194-back-zoom.avif', 'WTCMY-51194-alt1-zoom.avif'),
+(37, 9, 'DUREX Condom Fetherlite Ultima Extra Thin 3s', 'Why You\'ll Love Durex Fetherlite Ultima, extra Thin For Enhanced Sensitivity, ofers Increased Sensitivity. Increasing The Feeling Of Closeness To Your Partner Without Sacrificing Safety. Sleek Fit And Feel.', 18.90, 987, 'WTCMY-15483-side-zoom.avif', 'WTCMY-15483-front-zoom.avif', 'WTCMY-11968-back-zoom.avif'),
+(38, 9, 'DUREX Vibrating Ring Intense 1s', 'Why You\'ll Love Durex Play Vibrations Ring- Provides Up To 20 Minutes Pulsating Sensations For Her And For Him.- Can Help Him Stay Harder For Longer.- Super-Stretchy And Soft For Comfort.- Can Increase Pleasure For Both Partners.- Reusable Up To 6 Times.- It Is Battery Operated And Easy To Switch On/Off.- Can Be Used With Condoms, Lube Or Pleasure Gels.- Easy To Wear, Replaceable Battery.- Waterproof.', 40.00, 995, 'WTCMY-14964-front-zoom.avif', 'WTCMY-14964-back-zoom.avif', 'WTCMY-14964-alt2-zoom.avif');
 
 -- --------------------------------------------------------
 
@@ -352,6 +397,14 @@ CREATE TABLE `token` (
   `expire` datetime NOT NULL,
   `user_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `token`
+--
+
+INSERT INTO `token` (`id`, `expire`, `user_id`) VALUES
+('0bb147fe573a709a49eb6102165bf4ac', '2025-05-09 17:33:17', 5),
+('dea1c8bd643425d77cb0d226a6df258d', '2025-05-09 17:33:47', 5);
 
 -- --------------------------------------------------------
 
@@ -484,13 +537,13 @@ ALTER TABLE `voucher`
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `CartID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `CartID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `cartitem`
 --
 ALTER TABLE `cartitem`
-  MODIFY `CartItemID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `CartItemID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `category`
@@ -514,25 +567,25 @@ ALTER TABLE `manager`
 -- AUTO_INCREMENT for table `member`
 --
 ALTER TABLE `member`
-  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `MemberID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `orderitem`
 --
 ALTER TABLE `orderitem`
-  MODIFY `OrderItemID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `OrderItemID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `OrderID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `OrderID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `payment`
 --
 ALTER TABLE `payment`
-  MODIFY `PaymentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `PaymentID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `product`
