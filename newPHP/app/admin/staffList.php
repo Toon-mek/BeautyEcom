@@ -185,7 +185,7 @@ if (isset($_POST['edit_staff'])) {
                         </select>
                     </div>
                 </form>
-                <button onclick="showAddForm()" class="crud-btn add-btn" style="background:#2ecc71;color:white;margin-top:16px;">Add New Staff</button>
+                <button onclick="showAddForm()" class="crud-btn add-btn" style="background:#27ae60;color:#fff;margin-top:16px;">Add New Staff</button>
             </div>
 
             <?php if (isset($_GET['success'])): ?>

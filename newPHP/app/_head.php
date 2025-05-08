@@ -7,7 +7,6 @@ if (!file_exists($uploadsDir)) {
     mkdir($uploadsDir, 0777, true);
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>

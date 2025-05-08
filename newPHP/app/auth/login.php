@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login - Beauty & Wellness</title>
     <link href="../css/style.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         .alert-box {
             padding: 12px;
@@ -102,6 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-input" id="password" name="password" required />
+            </div>
+            <div class="form-group">
+            <div class="g-recaptcha" data-sitekey="6LetwzIrAAAAAJkfAxhzNQzSwtDDrZHuINFvpzC1"></div>
             </div>
             <div class="form-group">
                 <a href="forgotPassword.php" class="forgot-password-link">Forgot Password?</a>
