@@ -388,6 +388,12 @@ function processCheckout($pdo, $selectedItems) {
         $stmt->execute([$_SESSION['member_id'], $orderTotal, $voucherId, $shippingFee]);
         $orderId = $pdo->lastInsertId();
 
+        // Mark voucher as used by this user (if voucherId is set)
+        if ($voucherId) {
+            $stmt = $pdo->prepare("INSERT IGNORE INTO voucher_usage (member_id, voucher_id) VALUES (?, ?)");
+            $stmt->execute([$_SESSION['member_id'], $voucherId]);
+        }
+
         // Create order items and update stock
         foreach ($items as $item) {
             // Add to order items
@@ -1045,6 +1051,8 @@ function resetPasswordByToken($token, $newPassword) {
 function fetchAllVouchers($sort = 'CreatedAt', $order = 'desc')
 {
     global $pdo;
+    // Auto-inactivate expired vouchers
+    $pdo->exec("UPDATE voucher SET Status = 'Inactive' WHERE ExpiryDate < CURDATE() AND Status != 'Inactive'");
     $allowedSortFields = ['VoucherID', 'Code', 'Discount', 'ExpiryDate', 'Status', 'CreatedAt', 'UpdatedAt'];
     $allowedOrder = ['asc', 'desc'];
     if (!in_array($sort, $allowedSortFields)) $sort = 'CreatedAt';
@@ -1070,13 +1078,20 @@ function addVoucher($data)
 function editVoucher($id, $data)
 {
     global $pdo;
+    // Fetch the current voucher
+    $stmt = $pdo->prepare("SELECT ExpiryDate FROM voucher WHERE VoucherID = ?");
+    $stmt->execute([$id]);
+    $voucher = $stmt->fetch();
+    $isExpired = $voucher && (strtotime($voucher['ExpiryDate']) < strtotime(date('Y-m-d')));
+    // If expired, force status to Inactive
+    $status = $isExpired ? 'Inactive' : $data['status'];
     $stmt = $pdo->prepare("UPDATE voucher SET Code=?, Discount=?, ExpiryDate=?, Description=?, Status=? WHERE VoucherID=?");
     return $stmt->execute([
         $data['code'],
         $data['discount'],
         $data['expiry_date'],
         $data['description'],
-        $data['status'],
+        $status,
         $id
     ]);
 }
