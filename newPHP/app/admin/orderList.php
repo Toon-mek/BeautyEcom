@@ -198,30 +198,31 @@ $totalPages = ceil($totalOrders / $perPage);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($orders as $order): ?>
-                        <tr>
-                            <td><?php echo $order['OrderID']; ?></td>
-                            <td><?php echo date('Y-m-d H:i', strtotime($order['OrderDate'])); ?></td>
-                            <td><?php echo htmlspecialchars($order['CustomerName']); ?></td>
-                            <td>RM<?php echo number_format($order['OrderTotalAmount'], 2); ?></td>
-                            <td>
-                                <form method="POST" style="margin: 0;" id="statusForm_<?php echo $order['OrderID']; ?>">
-                                    <input type="hidden" name="order_id" value="<?php echo $order['OrderID']; ?>">
-                                    <select name="status" class="order-status-select" 
-                                            onchange="confirmStatusChange(this, <?php echo $order['OrderID']; ?>)" 
-                                            <?php if ($order['OrderStatus'] === 'Completed' || $order['OrderStatus'] === 'Cancelled') echo 'disabled'; ?>>
-                                        <option value="Pending" <?php echo ($order['OrderStatus'] === 'Pending') ? 'selected' : ''; ?>>Pending</option>
-                                        <option value="Completed" <?php echo ($order['OrderStatus'] === 'Completed') ? 'selected' : ''; ?>>Completed</option>
-                                        <option value="Cancelled" <?php echo ($order['OrderStatus'] === 'Cancelled') ? 'selected' : ''; ?>>Cancelled</option>
-                                    </select>
-                                    <input type="hidden" name="update_status" value="1">
-                                </form>
-                            </td>
-                            <td>
-                                <button class="crud-btn edit-btn" onclick="showOrderDetails(<?php echo $order['OrderID']; ?>)">View Details</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+<?php foreach ($orders as $order) {
+    $status = strtolower(trim($order['OrderStatus']));
+    $disabled = ($status === 'completed' || $status === 'cancelled') ? 'disabled' : '';
+?>
+    <tr>
+        <td><?php echo $order['OrderID']; ?></td>
+        <td><?php echo date('Y-m-d H:i', strtotime($order['OrderDate'])); ?></td>
+        <td><?php echo htmlspecialchars($order['CustomerName']); ?></td>
+        <td>RM<?php echo number_format($order['OrderTotalAmount'], 2); ?></td>
+        <td>
+            <form method="POST" style="margin: 0;" id="statusForm_<?php echo $order['OrderID']; ?>">
+                <input type="hidden" name="order_id" value="<?php echo $order['OrderID']; ?>">
+                <select name="status" class="order-status-select" onchange="confirmStatusChange(this, <?php echo $order['OrderID']; ?>)" <?php echo $disabled; ?>>
+                    <option value="Pending" <?php echo ($status === 'pending') ? 'selected' : ''; ?>>Pending</option>
+                    <option value="Completed" <?php echo ($status === 'completed') ? 'selected' : ''; ?>>Completed</option>
+                    <option value="Cancelled" <?php echo ($status === 'cancelled') ? 'selected' : ''; ?>>Cancelled</option>
+                </select>
+                <input type="hidden" name="update_status" value="1">
+            </form>
+        </td>
+        <td>
+            <button class="crud-btn edit-btn" onclick="showOrderDetails(<?php echo $order['OrderID']; ?>)">View Details</button>
+        </td>
+    </tr>
+<?php } ?>
                 </tbody>
             </table>
 
@@ -250,7 +251,7 @@ $totalPages = ceil($totalOrders / $perPage);
 
     <script>
         function showOrderDetails(orderId) {
-            fetch(orderList.php?action=get_details&order_id=${orderId})
+            fetch(`orderList.php?action=get_details&order_id=${orderId}`)
                 .then(response => response.text())
                 .then(html => {
                     document.getElementById('orderDetailsContent').innerHTML = html;
@@ -267,7 +268,7 @@ $totalPages = ceil($totalOrders / $perPage);
             const oldStatus = selectElement.options[selectElement.selectedIndex].text;
             
             if (newStatus === 'Completed' || newStatus === 'Cancelled') {
-                if (confirm(Are you sure you want to mark this order as ${newStatus}?)) {
+                if (confirm(`Are you sure you want to mark this order as ${newStatus}?`)) {
                     document.getElementById('statusForm_' + orderId).submit();
                     selectElement.disabled = true;
                 } else {
