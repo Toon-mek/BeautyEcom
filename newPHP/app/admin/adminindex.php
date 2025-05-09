@@ -46,6 +46,16 @@ $displayName = getDisplayName();
                 </div>
             </div>
 
+            <div class="admin-dashboard-card staff">
+                <div class="admin-dashboard-icon">
+                    <div class="icon icon-staff"></div>
+                </div>
+                <div class="admin-dashboard-info">
+                    <h3>Total Staff</h3>
+                    <p><?php echo getTotalStaff(); ?></p>
+                </div>
+            </div>
+
             <div class="admin-dashboard-card orders">
                 <div class="admin-dashboard-icon">
                     <div class="icon icon-orders"></div>
@@ -65,6 +75,8 @@ $displayName = getDisplayName();
                     <p><?php echo number_format(getTotalSales($pdo), 2); ?></p>
                 </div>
             </div>
+
+            
         </div>
     </main>
 </body>
