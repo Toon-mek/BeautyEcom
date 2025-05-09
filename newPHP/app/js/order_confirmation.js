@@ -34,4 +34,5 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log("Payment Method POST: " + (document.querySelector('input[name="payment_method"]')?.value || 'Not set'));
     console.log("Selected Payment Method: " + (document.querySelector('input[name="selected_payment_method"]')?.value || 'Not set'));
     console.log("Final payment method selected: " + (document.querySelector('input[name="payment_method"]')?.value || 'Not set'));
+
 }); 
