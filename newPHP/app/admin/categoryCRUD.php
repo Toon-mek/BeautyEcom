@@ -8,10 +8,7 @@ require_once __DIR__ . '/../_base.php';
 // Ensure staff is logged in
 requireLogin('staff');
 
-function normalizeCategoryName($name) {
-    // Remove all non-alphabetic characters and convert to lowercase
-    return strtolower(preg_replace('/[^a-zA-Z]/', '', $name));
-}
+
 
 // Handle Category Creation
 if (isset($_POST['create_category'])) {

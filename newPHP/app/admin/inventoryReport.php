@@ -9,56 +9,7 @@ require_once __DIR__ . '/../_base.php';
 requireLogin('staff');
 
 // Get inventory statistics
-function getInventoryStats($pdo) {
-    $stats = [];
-    
-    // Total products
-    $stmt = $pdo->query("SELECT COUNT(*) FROM product");
-    $stats['total_products'] = $stmt->fetchColumn();
-    
-    // Total stock value
-    $stmt = $pdo->query("SELECT SUM(Price * Quantity) FROM product");
-    $stats['total_value'] = $stmt->fetchColumn();
-    
-    // Low stock items (less than 10)
-    $stmt = $pdo->query("SELECT COUNT(*) FROM product WHERE Quantity <= 10");
-    $stats['low_stock_count'] = $stmt->fetchColumn();
-    
-    // Out of stock items
-    $stmt = $pdo->query("SELECT COUNT(*) FROM product WHERE Quantity = 0");
-    $stats['out_of_stock_count'] = $stmt->fetchColumn();
-    
-    return $stats;
-}
 
-// Get low stock products
-function getLowStockProducts($pdo) {
-    $stmt = $pdo->prepare("
-        SELECT p.*, c.CategoryName 
-        FROM product p 
-        LEFT JOIN category c ON p.CategoryID = c.CategoryID 
-        WHERE p.Quantity <= 10 
-        ORDER BY p.Quantity ASC
-    ");
-    $stmt->execute();
-    return $stmt->fetchAll();
-}
-
-// Get stock value by category
-function getStockValueByCategory($pdo) {
-    $stmt = $pdo->prepare("
-        SELECT c.CategoryName, 
-               COUNT(p.ProductID) as ProductCount,
-               SUM(p.Quantity) as TotalQuantity,
-               SUM(p.Price * p.Quantity) as TotalValue
-        FROM category c
-        LEFT JOIN product p ON c.CategoryID = p.CategoryID
-        GROUP BY c.CategoryID
-        ORDER BY TotalValue DESC
-    ");
-    $stmt->execute();
-    return $stmt->fetchAll();
-}
 
 $stats = getInventoryStats($pdo);
 $lowStockProducts = getLowStockProducts($pdo);
