@@ -59,37 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="../css/style.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <style>
-        .alert-box {
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            animation: slideDown 0.4s ease;
-            text-align: center;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .alert-error {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-15px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-    </style>
 </head>
 <body>
     <a href="../index.php" class="logo-link">

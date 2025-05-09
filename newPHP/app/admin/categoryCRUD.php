@@ -157,20 +157,6 @@ $categories = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Category Management</title>
     <link href="../css/admin.css" rel="stylesheet">
-    <style>
-        .alert-error {
-            color: #e74c3c;
-            font-weight: bold;
-            background: #fdecea;
-            border: 1px solid #e74c3c;
-            border-radius: 5px;
-            padding: 10px 16px;
-            margin-bottom: 16px;
-            font-size: 1.08em;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 8px rgba(231,76,60,0.07);
-        }
-    </style>
 </head>
 <body>
     <div class="admin-flex-container">

@@ -101,39 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Complete Your Profile - Beauty & Wellness</title>
     <link href="../css/style.css" rel="stylesheet">
     <link href="../css/admin.css" rel="stylesheet">
-    <style>
-        .setup-container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 30px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .welcome-message {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .welcome-message h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .welcome-message p {
-            color: #7f8c8d;
-        }
-
-        .preview-image {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin: 20px auto;
-            display: block;
-        }
-    </style>
 </head>
 
 <body>
@@ -149,16 +116,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" enctype="multipart/form-data" class="crud-form" onsubmit="return formValidation('staff')">
             <div style="text-align: center; margin-bottom: 30px;">
-                <img id="photoPreview" src="../uploads/default-avatar.png" class="preview-image" alt="">
+                <img id="photoPreview" src="<?php echo (!empty($staff['StaffProfilePhoto']) ? '../uploads/' . htmlspecialchars($staff['StaffProfilePhoto']) : '../assets/default-avatar.png'); ?>" class="preview-image" alt="Profile Photo">
             </div>
             <label>Profile Photo</label>
             <input type="file" name="profile_photo" accept="image/*" onchange="previewImage(this)">
             <label>Full Name</label>
-            <input type="text" name="name" id="name" required>
+            <input type="text" name="name" id="name" required value="<?php echo htmlspecialchars($staff['StaffName']); ?>">
             <label>Email</label>
-            <input type="email" name="email" id="email" required>
+            <input type="email" name="email" id="email" required value="<?php echo htmlspecialchars($staff['Email']); ?>">
             <label>Contact Number</label>
-            <input type="text" name="contact" id="phone" required>
+            <input type="text" name="contact" id="phone" required value="<?php echo htmlspecialchars($staff['Contact']); ?>">
             <label>Password</label>
             <input type="password" name="password" id="password">
             <label>Confirm New Password</label>
