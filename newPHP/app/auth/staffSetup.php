@@ -31,12 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
     $contact = $_POST['contact'];
-    $newPassword = $_POST['new_password'];
+    $newPassword = $_POST['password'];
     $confirmPassword = $_POST['confirm_password'];
     $profilePhoto = null;
 
-    // Validate passwords match if new password is provided
-    if (!empty($newPassword) && $newPassword !== $confirmPassword) {
+    // Require new password and confirm password
+    if (empty($newPassword) || empty($confirmPassword)) {
+        $error = "You must set a new password and confirm it.";
+    } else if ($newPassword !== $confirmPassword) {
         $error = "Passwords do not match!";
     } else {
         // Handle profile photo upload
@@ -69,9 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateFields['StaffProfilePhoto'] = $profilePhoto;
             }
 
-            if (!empty($newPassword)) {
-                $updateFields['Password'] = password_hash($newPassword, PASSWORD_DEFAULT);
-            }
+            $updateFields['Password'] = password_hash($newPassword, PASSWORD_DEFAULT);
 
             $sql = "UPDATE staff SET " .
                 implode(" = ?, ", array_keys($updateFields)) . " = ? " .
@@ -127,9 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Contact Number</label>
             <input type="text" name="contact" id="phone" required value="<?php echo htmlspecialchars($staff['Contact']); ?>">
             <label>Password</label>
-            <input type="password" name="password" id="password">
+            <input type="password" name="password" id="password" required>
             <label>Confirm New Password</label>
-            <input type="password" name="confirm_password" id="confirm_password">
+            <input type="password" name="confirm_password" id="confirm_password" required>
             <div id="password_error" style="color: red; display: none;">Passwords do not match!</div>
             <button type="submit" class="crud-btn" style="background:#2ecc71;color:white;width:100%;">
                 Complete Profile Setup
