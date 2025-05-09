@@ -22,26 +22,6 @@ function registerUser($name, $email, $password, $phone, $gender, $dob)
     }
 }
 
-function loginUser($email, $password)
-{
-    global $pdo;
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM member WHERE Email = ? LIMIT 1");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
-    
-        if ($user && password_verify($password, $user['Password'])) {
-            $_SESSION['member_id'] = $user['MemberID'];
-            $_SESSION['name'] = $user['Name'];
-            return true;
-        }
-        return false;
-    } catch (PDOException $e) {
-        error_log("Login Error: " . $e->getMessage());
-        return false;
-    }
-}    
-
 function isLoggedIn()
 {
     return isset($_SESSION['member_id']);
@@ -92,30 +72,6 @@ function requireLogin($role = 'member') {
 // ------------------------------
 // 📦 Product List + Filter
 // ------------------------------
-function getProducts($filters = [])
-{
-    global $pdo;
-    $query = "SELECT p.*, c.CategoryName 
-            FROM product p 
-            LEFT JOIN category c ON p.CategoryID = c.CategoryID 
-            WHERE 1=1";
-    $params = [];
-
-    if (!empty($filters['category'])) {
-        $query .= " AND p.CategoryID = ?";
-        $params[] = $filters['category'];
-    }
-
-    if (!empty($filters['search'])) {
-        $query .= " AND (p.ProductName LIKE ? OR p.Description LIKE ?)";
-        $params[] = "%" . $filters['search'] . "%";
-        $params[] = "%" . $filters['search'] . "%";
-    }
-
-    $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    return $stmt->fetchAll();
-}
 
 function getCategories()
 {
@@ -246,15 +202,7 @@ function redirectIfCartIsEmpty($cart_items) {
     }
 }
 
-function updateCartItem($pdo, $cart_item_id, $quantity)
-{
-    if ($quantity > 0) {
-        $stmt = $pdo->prepare("UPDATE cartitem SET Quantity = ? WHERE CartItemID = ?");
-        $stmt->execute([$quantity, $cart_item_id]);
-    } else {
-        removeCartItem($pdo, $cart_item_id);
-    }
-}
+
 
 function removeCartItem($pdo, $cart_item_id)
 {
@@ -388,6 +336,12 @@ function processCheckout($pdo, $selectedItems) {
         $stmt->execute([$_SESSION['member_id'], $orderTotal, $voucherId, $shippingFee]);
         $orderId = $pdo->lastInsertId();
 
+        // Mark voucher as used by this user (if voucherId is set)
+        if ($voucherId) {
+            $stmt = $pdo->prepare("INSERT IGNORE INTO voucher_usage (member_id, voucher_id) VALUES (?, ?)");
+            $stmt->execute([$_SESSION['member_id'], $voucherId]);
+        }
+
         // Create order items and update stock
         foreach ($items as $item) {
             // Add to order items
@@ -434,39 +388,6 @@ function processCheckout($pdo, $selectedItems) {
 // ------------------------------
 // 🧾 Order Creation
 // ------------------------------
-function createOrder($cartItems)
-{
-    if (!isLoggedIn()) return false;
-
-    global $pdo;
-    try {
-        $pdo->beginTransaction();
-
-        $total = 0;
-        foreach ($cartItems as $item) {
-            $total += $item['Price'] * $item['Quantity'];
-        }
-
-        $stmt = $pdo->prepare("INSERT INTO `order` (MemberID, OrderTotalAmount) VALUES (?, ?)");
-        $stmt->execute([$_SESSION['member_id'], $total]);
-        $orderId = $pdo->lastInsertId();
-
-        foreach ($cartItems as $item) {
-            $stmt = $pdo->prepare("INSERT INTO orderitem (OrderID, ProductID, OrderItemQTY, OrderItemPrice) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$orderId, $item['ProductID'], $item['Quantity'], $item['Price']]);
-        }
-
-        $stmt = $pdo->prepare("UPDATE cart SET CartStatus = 'Inactive' WHERE MemberID = ? AND CartStatus = 'Active'");
-        $stmt->execute([$_SESSION['member_id']]);
-
-        $pdo->commit();
-        return $orderId;
-    } catch (PDOException $e) {
-        $pdo->rollBack();
-        error_log("Create Order Error: " . $e->getMessage());
-        return false;
-    }
-}
 
 // ------------------------------
 // 🔒 Admin Auth & Dashboard Info
@@ -475,73 +396,6 @@ function checkIfStaffLoggedIn()
 {
     if (!isset($_SESSION['staff_id'])) {
         header("Location: ../auth/staffLogin.php");
-        exit();
-    }
-}
-function requireAdminPage() {
-    require_once __DIR__ . '/../_base.php';
-    requireLogin('staff');
-}
-function handleStaffLogin(PDO $pdo)
-{
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
-
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
-
-    try {
-        // 🔍 1. Check staff table
-        $stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
-        $stmt->execute([$username]);
-        $staff = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($staff) {
-            // 🛡️ Block inactive accounts
-            if ($staff['StaffStatus'] === 'Inactive') {
-                $_SESSION['staff_login_error'] = "Your staff account is inactive. Please contact admin.";
-                header("Location: staffLogin.php");
-                exit();
-            }
-
-            // 🔐 Verify password
-            if (password_verify($password, $staff['Password'])) {
-                $_SESSION['staff_id'] = $staff['StaffUsername'];
-                $_SESSION['staff_name'] = $staff['StaffName'] ?? $staff['StaffUsername'];
-                $_SESSION['is_manager'] = false;
-
-                // 🔁 First-time setup redirect
-                if (!empty($staff['FirstTimeLogin'])) {
-                    header("Location: ../auth/staffSetup.php");
-                } else {
-                    header("Location: ../admin/adminindex.php");
-                }
-                exit();
-            }
-        }
-
-        // 🔍 2. Check manager table if not found in staff
-        $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
-        $stmt->execute([$username]);
-        $manager = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($manager && password_verify($password, $manager['Password'])) {
-            $_SESSION['staff_id'] = $manager['ManagerUsername'];
-            $_SESSION['staff_name'] = $manager['ManagerName'] ?? $manager['ManagerUsername'];
-            $_SESSION['is_manager'] = true;
-
-            header("Location: ../admin/adminindex.php");
-            exit();
-        }
-
-        // ❌ Invalid credentials fallback
-        $_SESSION['staff_login_error'] = "Invalid username or password.";
-        header("Location: staffLogin.php");
-        exit();
-
-    } catch (PDOException $e) {
-        error_log("Staff login error: " . $e->getMessage());
-        $_SESSION['staff_login_error'] = "Login system error. Contact admin.";
-        header("Location: staffLogin.php");
         exit();
     }
 }
@@ -594,20 +448,6 @@ function getTotalSales($pdo)
 // ------------------------------
 // 👥 Member Management (Admin)
 // ------------------------------
-function fetchAllMembers($sort = 'CreatedAt', $order = 'desc')
-{
-    global $pdo;
-
-    $allowedSortFields = ['MemberID', 'Name', 'Email', 'PhoneNumber', 'Gender', 'DateOfBirth', 'CreatedAt'];
-    $allowedOrder = ['asc', 'desc'];
-
-    if (!in_array($sort, $allowedSortFields)) $sort = 'CreatedAt';
-    if (!in_array(strtolower($order), $allowedOrder)) $order = 'desc';
-
-    $stmt = $pdo->prepare("SELECT * FROM member ORDER BY $sort $order");
-    $stmt->execute();
-    return $stmt->fetchAll();
-}    
 
 function deleteMember($id)
 {
@@ -672,12 +512,7 @@ function handleEditMember()
 // ------------------------------
 // 🛠️ Admin Product Management
 // ------------------------------
-function fetchAllProducts()
-{
-    global $pdo;
-    $stmt = $pdo->query("SELECT p.*, c.CategoryName FROM product p LEFT JOIN category c ON p.CategoryID = c.CategoryID ORDER BY ProductID DESC");
-    return $stmt->fetchAll();
-}
+
 function fetchAllCategories()
 {
     global $pdo;
@@ -1045,6 +880,8 @@ function resetPasswordByToken($token, $newPassword) {
 function fetchAllVouchers($sort = 'CreatedAt', $order = 'desc')
 {
     global $pdo;
+    // Auto-inactivate expired vouchers
+    $pdo->exec("UPDATE voucher SET Status = 'Inactive' WHERE ExpiryDate < CURDATE() AND Status != 'Inactive'");
     $allowedSortFields = ['VoucherID', 'Code', 'Discount', 'ExpiryDate', 'Status', 'CreatedAt', 'UpdatedAt'];
     $allowedOrder = ['asc', 'desc'];
     if (!in_array($sort, $allowedSortFields)) $sort = 'CreatedAt';
@@ -1070,13 +907,20 @@ function addVoucher($data)
 function editVoucher($id, $data)
 {
     global $pdo;
+    // Fetch the current voucher
+    $stmt = $pdo->prepare("SELECT ExpiryDate FROM voucher WHERE VoucherID = ?");
+    $stmt->execute([$id]);
+    $voucher = $stmt->fetch();
+    $isExpired = $voucher && (strtotime($voucher['ExpiryDate']) < strtotime(date('Y-m-d')));
+    // If expired, force status to Inactive
+    $status = $isExpired ? 'Inactive' : $data['status'];
     $stmt = $pdo->prepare("UPDATE voucher SET Code=?, Discount=?, ExpiryDate=?, Description=?, Status=? WHERE VoucherID=?");
     return $stmt->execute([
         $data['code'],
         $data['discount'],
         $data['expiry_date'],
         $data['description'],
-        $data['status'],
+        $status,
         $id
     ]);
 }
@@ -1164,6 +1008,107 @@ function getTotalStaff()
 {
     global $pdo;
     return $pdo->query("SELECT COUNT(*) FROM staff")->fetchColumn();
+}
+function handleStaffLogin($pdo) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+
+        // First check staff table
+        $stmt = $pdo->prepare("SELECT * FROM staff WHERE StaffUsername = ?");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            // If not found in staff table, check manager table
+            $stmt = $pdo->prepare("SELECT * FROM manager WHERE ManagerUsername = ?");
+            $stmt->execute([$username]);
+            $user = $stmt->fetch();
+            
+            if ($user && password_verify($password, $user['Password'])) {
+                $_SESSION['staff_id'] = $user['ManagerUsername'];
+                $_SESSION['staff_name'] = $user['ManagerName'] ?? $user['ManagerUsername'];
+                $_SESSION['is_manager'] = true;
+                header("Location: ../admin/adminindex.php");
+                exit();
+            }
+        } else if ($user && password_verify($password, $user['Password'])) {
+            if ($user['StaffStatus'] === 'Inactive') {
+                $_SESSION['staff_login_error'] = "Your account is inactive. Please contact admin.";
+                header("Location: staffLogin.php");
+                exit();
+            }
+
+            $_SESSION['staff_id'] = $user['StaffUsername'];
+            $_SESSION['staff_name'] = $user['StaffName'] ?? $user['StaffUsername'];
+            $_SESSION['is_manager'] = false;
+
+            if (!empty($user['FirstTimeLogin'])) {
+                header("Location: ../auth/staffSetup.php");
+            } else {
+                header("Location: ../admin/adminindex.php");
+            }
+            exit();
+        }
+        
+        $_SESSION['staff_login_error'] = "Invalid username or password.";
+        header("Location: staffLogin.php");
+        exit();
+    }
+}
+function normalizeCategoryName($name) {
+    // Remove all non-alphabetic characters and convert to lowercase
+    return strtolower(preg_replace('/[^a-zA-Z]/', '', $name));
+}
+function getInventoryStats($pdo) {
+    $stats = [];
+    
+    // Total products
+    $stmt = $pdo->query("SELECT COUNT(*) FROM product");
+    $stats['total_products'] = $stmt->fetchColumn();
+    
+    // Total stock value
+    $stmt = $pdo->query("SELECT SUM(Price * Quantity) FROM product");
+    $stats['total_value'] = $stmt->fetchColumn();
+    
+    // Low stock items (less than 10)
+    $stmt = $pdo->query("SELECT COUNT(*) FROM product WHERE Quantity <= 10");
+    $stats['low_stock_count'] = $stmt->fetchColumn();
+    
+    // Out of stock items
+    $stmt = $pdo->query("SELECT COUNT(*) FROM product WHERE Quantity = 0");
+    $stats['out_of_stock_count'] = $stmt->fetchColumn();
+    
+    return $stats;
+}
+
+// Get low stock products
+function getLowStockProducts($pdo) {
+    $stmt = $pdo->prepare("
+        SELECT p.*, c.CategoryName 
+        FROM product p 
+        LEFT JOIN category c ON p.CategoryID = c.CategoryID 
+        WHERE p.Quantity <= 10 
+        ORDER BY p.Quantity ASC
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll();
+}
+
+// Get stock value by category
+function getStockValueByCategory($pdo) {
+    $stmt = $pdo->prepare("
+        SELECT c.CategoryName, 
+               COUNT(p.ProductID) as ProductCount,
+               SUM(p.Quantity) as TotalQuantity,
+               SUM(p.Price * p.Quantity) as TotalValue
+        FROM category c
+        LEFT JOIN product p ON c.CategoryID = p.CategoryID
+        GROUP BY c.CategoryID
+        ORDER BY TotalValue DESC
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll();
 }
 
 ?>

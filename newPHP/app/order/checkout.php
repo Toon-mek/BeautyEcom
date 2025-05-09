@@ -37,6 +37,7 @@ $voucher_discount = 0;
 // Only process voucher if "apply_voucher" button was clicked or if a voucher code exists
 if (isset($_POST['apply_voucher']) || $voucher_code) {
     if (!empty($voucher_code)) {
+        // 1. Find the voucher
         $stmt = $pdo->prepare("
             SELECT * FROM voucher 
             WHERE Code = ? AND Status = 'Active' AND ExpiryDate >= CURDATE()
@@ -45,10 +46,18 @@ if (isset($_POST['apply_voucher']) || $voucher_code) {
         $voucher = $stmt->fetch();
 
         if ($voucher) {
-            $voucher_discount = $voucher['Discount'];
-            // Apply percentage discount
-            $discounted_amount = $total * ($voucher_discount / 100);
-            $total = $total - $discounted_amount;
+            // 2. Check if user has already used this voucher
+            $check = $pdo->prepare("SELECT 1 FROM voucher_usage WHERE member_id = ? AND voucher_id = ?");
+            $check->execute([$_SESSION['member_id'], $voucher['VoucherID']]);
+            if ($check->fetch()) {
+                $error_message = "Your voucher has been used.";
+                $voucher = null; // Prevent applying
+            } else {
+                $voucher_discount = $voucher['Discount'];
+                // Apply percentage discount
+                $discounted_amount = $total * ($voucher_discount / 100);
+                $total = $total - $discounted_amount;
+            }
         } else {
             $error_message = "Invalid or expired voucher code.";
         }

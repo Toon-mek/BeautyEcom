@@ -210,20 +210,6 @@ $statuses = $statusStmt->fetchAll(PDO::FETCH_COLUMN);
     </div>
     
     <?php require_once __DIR__ . '/../_foot.php'; ?>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-submit form when filters change
-            const filterForm = document.querySelector('.filters-form');
-            const filterInputs = filterForm.querySelectorAll('select, input[type="text"]');
-            
-            filterInputs.forEach(input => {
-                if (input.tagName === 'SELECT') {
-                    input.addEventListener('change', function() {
-                        filterForm.submit();
-                    });
-                }
-            });
-        });
-    </script>
+    <script src="../js/member_order.js"></script>
 </body>
 </html>

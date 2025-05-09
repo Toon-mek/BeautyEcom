@@ -110,19 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>Don't have an account? <a href="register.php">Register here</a></p>
         </div>
     </div>
-    <script>
-    document.getElementById('togglePassword').addEventListener('click', function () {
-        const passwordInput = document.getElementById('password');
-        const icon = document.getElementById('togglePasswordIcon');
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.textContent = '🙈';
-        } else {
-            passwordInput.type = 'password';
-            icon.textContent = '👁️';
-        }
-    });
-    </script>
+    <script src="../js/login.js"></script>
 </body>
 
 </html>

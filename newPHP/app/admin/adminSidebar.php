@@ -2,16 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../_base.php';
-
 requireLogin('staff');
-
 // Determine if user is manager
 $isManager = isManager($_SESSION['staff_id']);
 ?>
-
 
 <div class="admin-sidebar">
     <div class="admin-sidebar-header">

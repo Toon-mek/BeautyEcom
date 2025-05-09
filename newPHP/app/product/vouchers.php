@@ -1,14 +1,27 @@
 <?php
 require_once __DIR__ . '/../_base.php';
 
-// Get all active vouchers that haven't expired
-$stmt = $pdo->prepare("
-    SELECT * FROM voucher 
-    WHERE Status = 'Active' 
-    AND ExpiryDate >= CURDATE()
-    ORDER BY ExpiryDate ASC
-");
-$stmt->execute();
+// Get all active vouchers that haven't expired and not used by the user
+if (isset($_SESSION['member_id'])) {
+    $stmt = $pdo->prepare("
+        SELECT * FROM voucher v
+        WHERE v.Status = 'Active'
+        AND v.ExpiryDate >= CURDATE()
+        AND v.VoucherID NOT IN (
+            SELECT voucher_id FROM voucher_usage WHERE member_id = ?
+        )
+        ORDER BY v.ExpiryDate ASC
+    ");
+    $stmt->execute([$_SESSION['member_id']]);
+} else {
+    $stmt = $pdo->prepare("
+        SELECT * FROM voucher 
+        WHERE Status = 'Active' 
+        AND ExpiryDate >= CURDATE()
+        ORDER BY ExpiryDate ASC
+    ");
+    $stmt->execute();
+}
 $vouchers = $stmt->fetchAll();
 ?>
 

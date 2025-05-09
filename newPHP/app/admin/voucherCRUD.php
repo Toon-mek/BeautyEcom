@@ -12,7 +12,6 @@ if (!isManager($_SESSION['staff_id'])) {
 // Allowed sort columns and directions
 $allowedSort = ['VoucherID', 'Code', 'Discount', 'ExpiryDate', 'Status', 'CreatedAt', 'UpdatedAt'];
 $allowedDir = ['asc', 'desc'];
-
 $sort = $_GET['sort'] ?? 'VoucherID';
 $dir = $_GET['order'] ?? 'desc';
 $search = $_GET['search'] ?? '';
@@ -76,6 +75,29 @@ if (isset($_POST['edit_voucher'])) {
 if (isset($_GET['delete'])) {
     deleteVoucher($_GET['delete']);
     header('Location: voucherCRUD.php');
+    exit;
+}
+
+// AJAX handler for usedby
+if (isset($_GET['usedby'])) {
+    $voucherId = intval($_GET['usedby']);
+    $stmt = $pdo->prepare('SELECT m.Name, m.Email, vu.used_at FROM voucher_usage vu JOIN member m ON vu.member_id = m.MemberID WHERE vu.voucher_id = ? ORDER BY vu.used_at DESC');
+    $stmt->execute([$voucherId]);
+    $users = $stmt->fetchAll();
+    if (count($users) === 0) {
+        echo '<p>No users have used this voucher yet.</p>';
+    } else {
+        echo '<table style="width:100%;border-collapse:collapse;">';
+        echo '<tr><th>Name</th><th>Email</th><th>Used At</th></tr>';
+        foreach ($users as $user) {
+            echo '<tr>';
+            echo '<td>' . htmlspecialchars($user['Name']) . '</td>';
+            echo '<td>' . htmlspecialchars($user['Email']) . '</td>';
+            echo '<td>' . htmlspecialchars($user['used_at']) . '</td>';
+            echo '</tr>';
+        }
+        echo '</table>';
+    }
     exit;
 }
 
@@ -145,6 +167,7 @@ function buildSortLink($column, $label) {
                     <th><?= buildSortLink('Status', 'Status') ?></th>
                     <th><?= buildSortLink('CreatedAt', 'Created At') ?></th>
                     <th><?= buildSortLink('UpdatedAt', 'Updated At') ?></th>
+                    <th>Used Details</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -159,6 +182,9 @@ function buildSortLink($column, $label) {
                     <td><?= htmlspecialchars($voucher['Status']) ?></td>
                     <td><?= htmlspecialchars($voucher['CreatedAt']) ?></td>
                     <td><?= htmlspecialchars($voucher['UpdatedAt']) ?></td>
+                    <td>
+                        <button type="button" class="crud-btn" onclick="showUsedByModal(<?= $voucher['VoucherID'] ?>)">View Users</button>
+                    </td>
                     <td>
                         <a href="?edit=<?= $voucher['VoucherID'] ?>" class="crud-btn edit-btn">Edit</a>
                         <a href="?delete=<?= $voucher['VoucherID'] ?>" class="crud-btn delete-btn" onclick="return confirm('Delete this voucher?')">Delete</a>
@@ -192,6 +218,9 @@ function buildSortLink($column, $label) {
 
 <!-- Edit Voucher Modal -->
 <?php if ($editVoucher): ?>
+<?php
+    $isExpired = (strtotime($editVoucher['ExpiryDate']) < strtotime(date('Y-m-d')));
+?>
 <div class="modal-overlay active" id="editVoucherModal">
     <div class="modal-content">
         <button type="button" class="modal-close-btn" onclick="window.location.href='voucherCRUD.php'">&times;</button>
@@ -202,10 +231,13 @@ function buildSortLink($column, $label) {
             <input type="number" name="discount" min="1" max="100" step="1" placeholder="Discount (%)" required class="crud-select" value="<?= htmlspecialchars($editVoucher['Discount']) ?>" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,3)">
             <input type="date" name="expiry_date" id="edit_expiry_date" required class="crud-select" value="<?= htmlspecialchars($editVoucher['ExpiryDate']) ?>">
             <input type="text" name="description" placeholder="Description" class="crud-select" value="<?= htmlspecialchars($editVoucher['Description']) ?>">
-            <select name="status" class="crud-select">
+            <select name="status" class="crud-select" <?= $isExpired ? 'disabled' : '' ?>>
                 <option value="Active" <?= $editVoucher['Status'] === 'Active' ? 'selected' : '' ?>>Active</option>
                 <option value="Inactive" <?= $editVoucher['Status'] === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
             </select>
+            <?php if ($isExpired): ?>
+                <div style="color:#c0392b; font-size:0.95em; margin-top:6px;">This voucher is expired and cannot be re-activated.</div>
+            <?php endif; ?>
             <button type="submit" name="edit_voucher" class="crud-btn edit-btn" style="background:#f39c12;color:#fff;">Save Changes</button>
             <button type="button" class="crud-btn" onclick="window.location.href='voucherCRUD.php'">Cancel</button>
         </form>
@@ -213,54 +245,76 @@ function buildSortLink($column, $label) {
 </div>
 <?php endif; ?>
 
-<script>
-function showAddVoucherForm() {
-    document.getElementById('addVoucherModal').classList.add('active');
+<style>
+#usedByModal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.18);
+    align-items: center; justify-content: center;
 }
-function hideAddVoucherForm() {
-    document.getElementById('addVoucherModal').classList.remove('active');
-    document.getElementById('addVoucherForm').reset();
+#usedByModal.active { display: flex; }
+#usedByModal .modal-content {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(44,62,80,0.18);
+    padding: 32px 28px 24px 28px;
+    margin: auto;
+    min-width: 340px;
+    max-width: 600px;
+    width: 95%;
+    position: relative;
 }
-// Set minimum expiry date to 24 hours from now
-window.addEventListener('DOMContentLoaded', function() {
-    var expiryInput = document.getElementById('expiry_date');
-    if (expiryInput) {
-        var now = new Date();
-        now.setDate(now.getDate() + 1); // 24 hours from now
-        var minDate = now.toISOString().split('T')[0];
-        expiryInput.min = minDate;
-    }
-    // For edit modal
-    var editExpiryInput = document.getElementById('edit_expiry_date');
-    if (editExpiryInput) {
-        var now = new Date();
-        now.setDate(now.getDate() + 1);
-        var minDate = now.toISOString().split('T')[0];
-        editExpiryInput.min = minDate;
-    }
-});
-// Validate discount input (1-100, integer only)
-function validateVoucherForm() {
-    var discount = document.querySelector('#addVoucherForm input[name="discount"]');
-    var value = parseInt(discount.value, 10);
-    if (isNaN(value) || value < 1 || value > 100) {
-        alert('Discount must be an integer between 1 and 100.');
-        discount.focus();
-        return false;
-    }
-    return true;
+#usedByModal h3 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    font-size: 1.35rem;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
-// Validate edit form
-function validateEditVoucherForm() {
-    var discount = document.querySelector('#editVoucherForm input[name="discount"]');
-    var value = parseInt(discount.value, 10);
-    if (isNaN(value) || value < 1 || value > 100) {
-        alert('Discount must be an integer between 1 and 100.');
-        discount.focus();
-        return false;
-    }
-    return true;
+#usedByModal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background: #fafbfc;
+    border-radius: 8px;
+    overflow: hidden;
 }
-</script>
+#usedByModal th, #usedByModal td {
+    padding: 10px 12px;
+    text-align: left;
+}
+#usedByModal th {
+    background: #f3e9f5;
+    font-weight: 600;
+    color: #7d3c98;
+    border-bottom: 1px solid #e1d5e7;
+}
+#usedByModal tr:nth-child(even) { background: #f8f4fa; }
+#usedByModal tr:nth-child(odd) { background: #fff; }
+#usedByModal .modal-close-btn {
+    position: absolute;
+    top: 12px; right: 18px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+#usedByModal .modal-close-btn:hover { color: #d35400; }
+#usedByContent p { text-align: center; color: #888; margin: 24px 0 0 0; }
+</style>
+<div class="modal-overlay" id="usedByModal">
+    <div class="modal-content">
+        <button type="button" class="modal-close-btn" onclick="hideUsedByModal()">&times;</button>
+        <h3>Users Who Used This Voucher</h3>
+        <div id="usedByContent">Loading...</div>
+    </div>
+</div>
+
+<script src="../js/voucherCRUD.js"></script>
 </body>
 </html>

@@ -292,44 +292,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout']) && isset(
         </div>
     </div>
 
-    <script>
-        // Get the modal
-        var modal = document.getElementById("cancelModal");
-        
-        // Get the button that opens the modal
-        var btn = document.getElementById("cancelOrderBtn");
-        
-        // Get the close button
-        var closeBtn = document.getElementsByClassName("close-modal")[0];
-        
-        // When the user clicks the button, open the modal 
-        if (btn) {
-            btn.onclick = function() {
-                modal.style.display = "block";
-            }
-        }
-        
-        // When the user clicks on close button, close the modal
-        if (closeBtn) {
-            closeBtn.onclick = function() {
-                modal.style.display = "none";
-            }
-        }
-        
-        // When the user clicks anywhere outside of the modal, close it
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
-    </script>
+    <script src="../js/order_confirmation.js"></script>
 </body>
 </html>
 
 <?php require_once __DIR__ . '/../_foot.php'; ?>
-<script>
-    // Debug information in browser console
-    console.log("Payment Method POST: <?= addslashes($_POST['payment_method'] ?? 'Not set') ?>");
-    console.log("Selected Payment Method: <?= addslashes($_POST['selected_payment_method'] ?? 'Not set') ?>");
-    console.log("Final payment method selected: <?= addslashes($payment_method) ?>");
-</script>
