@@ -116,16 +116,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form method="POST" enctype="multipart/form-data" class="crud-form" onsubmit="return formValidation('staff')">
             <div style="text-align: center; margin-bottom: 30px;">
-                <img id="photoPreview" src="<?php echo (!empty($staff['StaffProfilePhoto']) ? '../uploads/' . htmlspecialchars($staff['StaffProfilePhoto']) : '../assets/default-avatar.png'); ?>" class="preview-image" alt="Profile Photo">
+                <img id="photoPreview" src="../uploads/default-avatar.png" class="preview-image" alt="">
             </div>
             <label>Profile Photo</label>
             <input type="file" name="profile_photo" accept="image/*" onchange="previewImage(this)">
             <label>Full Name</label>
-            <input type="text" name="name" id="name" required value="<?php echo htmlspecialchars($staff['StaffName']); ?>">
+            <input type="text" name="name" id="name" required>
             <label>Email</label>
-            <input type="email" name="email" id="email" required value="<?php echo htmlspecialchars($staff['Email']); ?>">
+            <input type="email" name="email" id="email" required>
             <label>Contact Number</label>
-            <input type="text" name="contact" id="phone" required value="<?php echo htmlspecialchars($staff['Contact']); ?>">
+            <input type="text" name="contact" id="phone" required>
             <label>Password</label>
             <input type="password" name="password" id="password">
             <label>Confirm New Password</label>
