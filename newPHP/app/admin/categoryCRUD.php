@@ -7,7 +7,6 @@ require_once __DIR__ . '/../_base.php';
 
 // Ensure staff is logged in
 requireLogin('staff');
-
 function normalizeCategoryName($name) {
     // Remove all non-alphabetic characters and convert to lowercase
     return strtolower(preg_replace('/[^a-zA-Z]/', '', $name));
@@ -269,38 +268,6 @@ $categories = $stmt->fetchAll();
         </div>
     </div>
 
-    <script>
-        function showAddModal() {
-            document.getElementById('addModal').style.display = 'flex';
-        }
-        function closeAddModal() {
-            document.getElementById('addModal').style.display = 'none';
-        }
-
-        function editCategory(category) {
-            document.getElementById('edit_category_id').value = category.CategoryID;
-            document.getElementById('edit_category_name').value = category.CategoryName;
-            document.getElementById('edit_category_description').value = category.CategoryDescription;
-            document.getElementById('editModal').style.display = 'flex';
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('editModal');
-            if (event.target === modal) {
-                closeEditModal();
-            }
-        }
-
-        <?php if (isset($_SESSION['add_error'])): ?>
-            document.addEventListener('DOMContentLoaded', function() {
-                showAddModal();
-            });
-        <?php unset($_SESSION['add_error']); unset($_SESSION['error']); endif; ?>
-    </script>
+    <script src="../js/categoryCRUD.js"></script>
 </body>
 </html> 

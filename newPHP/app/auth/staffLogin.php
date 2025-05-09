@@ -12,6 +12,7 @@ $error = handleStaffLogin($pdo);
     <link href="../css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="../js/staffLogin.js"></script>
 </head>
 <body>
     <a href="../index.php" class="logo-link">
@@ -59,17 +60,3 @@ $error = handleStaffLogin($pdo);
 </body>
 
 </html>
-<script src="../js/staffLogin.js"></script>
-<script>
-document.getElementById('togglePassword').addEventListener('click', function () {
-    const passwordInput = document.getElementById('password');
-    const icon = document.getElementById('togglePasswordIcon');
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.textContent = '🙈';
-    } else {
-        passwordInput.type = 'password';
-        icon.textContent = '👁️';
-    }
-});
-</script>
