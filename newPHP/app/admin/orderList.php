@@ -248,6 +248,36 @@ $totalPages = ceil($totalOrders / $perPage);
         </div>
     </div>
 
-    <script src="../js/orderList.js"></script>
+    <script>
+        function showOrderDetails(orderId) {
+            fetch(orderList.php?action=get_details&order_id=${orderId})
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('orderDetailsContent').innerHTML = html;
+                    document.getElementById('orderDetailsModal').classList.add('active');
+                });
+        }
+
+        function hideOrderDetails() {
+            document.getElementById('orderDetailsModal').classList.remove('active');
+        }
+
+        function confirmStatusChange(selectElement, orderId) {
+            const newStatus = selectElement.value;
+            const oldStatus = selectElement.options[selectElement.selectedIndex].text;
+            
+            if (newStatus === 'Completed' || newStatus === 'Cancelled') {
+                if (confirm(Are you sure you want to mark this order as ${newStatus}?)) {
+                    document.getElementById('statusForm_' + orderId).submit();
+                    selectElement.disabled = true;
+                } else {
+                    // Reset to previous value if user cancels
+                    selectElement.value = oldStatus;
+                }
+            } else {
+                document.getElementById('statusForm_' + orderId).submit();
+            }
+        }
+    </script>
 </body>
-</html> 
+</html>
