@@ -500,18 +500,6 @@ function processUserQuery($message, $conn) {
         throw $e; // Re-throw the exception to be caught by the main handler
     }
 }
-
-function getLowStockProducts($pdo) {
-    $stmt = $pdo->prepare("
-        SELECT p.*, c.CategoryName 
-        FROM product p 
-        LEFT JOIN category c ON p.CategoryID = c.CategoryID 
-        WHERE p.Quantity < 10 
-        ORDER BY p.Quantity ASC
-    ");
-    $stmt->execute();
-    return $stmt->fetchAll();
-}
 ?>
 
 <?php require_once __DIR__ . '/_foot.php'; ?>

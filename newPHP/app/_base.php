@@ -946,7 +946,7 @@ function updateOrderStatus($pdo, $orderId, $newStatus) {
     $validStatuses = ['Pending', 'Completed', 'Cancelled'];
     if (!in_array($newStatus, $validStatuses)) {
         return false;
-    }
+    }   
     
     try {
         $stmt = $pdo->prepare("UPDATE orders SET OrderStatus = ? WHERE OrderID = ?");
