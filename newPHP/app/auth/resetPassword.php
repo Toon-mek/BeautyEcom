@@ -33,58 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <title>Reset Password</title>
     <link href="../css/style.css" rel="stylesheet" />
-    <style>
-        .form-container {
-            max-width: 400px;
-            margin: 50px auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .form-container h2 {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-        .form-input {
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .btn {
-            background-color: #e67e22;
-            color: white;
-            padding: 10px 0;
-            width: 100%;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .alert-box {
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .alert-error {
-            background-color: #f8d7da;
-            color: #842029;
-        }
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-    </style>
 </head>
 <body>
     <div class="form-container">
